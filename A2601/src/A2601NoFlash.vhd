@@ -32,7 +32,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity A2601NoFlash is
-   port (clk: in std_logic;
+   port (vid_clk: in std_logic;
 			audio: out std_logic;
          O_VSYNC: out std_logic;
          O_HSYNC: out std_logic;
@@ -66,17 +66,6 @@ end A2601NoFlash;
 
 architecture arch of A2601NoFlash is
 
-	COMPONENT a2601_dcm
-	PORT(
-		CLKIN_IN : IN std_logic; 
-		RST_IN : IN std_logic; 		
-		CLKFX_OUT : OUT std_logic;
-		CLKIN_IBUFG_OUT : OUT std_logic;
-		CLK0_OUT : OUT std_logic;
-		CLK2X_OUT : OUT std_logic
-		);
-	END COMPONENT;
-
     component A2601 is
     port(vid_clk: in std_logic;
          rst: in std_logic;
@@ -101,14 +90,6 @@ architecture arch of A2601NoFlash is
          ph1_out: out std_logic);
     end component;
 
-	COMPONENT cart_rom
-	PORT(
-		clk : IN std_logic;
-		addr : IN std_logic_vector(13 downto 0);          
-		data : OUT std_logic_vector(7 downto 0)
-		);
-	END COMPONENT;
-	
 	COMPONENT VGA_SCANDBL
 	PORT(
 		I_R : IN std_logic_vector(2 downto 0);
@@ -148,7 +129,6 @@ architecture arch of A2601NoFlash is
              a: in std_logic_vector(6 downto 0));
     end component;
     
-	 signal vid_clk, vid_clkx2: std_logic;
     signal d: std_logic_vector(7 downto 0);
     --signal cpu_d: std_logic_vector(7 downto 0);
     signal a: std_logic_vector(13 downto 0);
@@ -233,36 +213,17 @@ architecture arch of A2601NoFlash is
 	 
 begin
 	  
---	Inst_a2601_dcm: a2601_dcm PORT MAP(
---		CLKIN_IN => clk,
---		RST_IN => '0',		
---		CLKFX_OUT => vid_clk,
---		CLKIN_IBUFG_OUT => open,
---		CLK0_OUT => open,
---		CLK2X_OUT => vid_clkx2
---	);		
-
-  u_clocks : entity work.PACMAN_CLOCKS
-    port map (
-      I_CLK_REF  => clk,
-      I_RESET_L  => '1',
-      --
-      O_CLK_REF  => open,
-      --
-      O_ENA_12   => open,
-      O_ENA_6    => open,
-      O_CLK      => vid_clk,
-      O_RESET    => open
-      );	  
-
     ms_A2601: A2601
         port map(vid_clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, inpt4, inpt5, colu, csyn, vsyn, hsyn, rgbx2, cv, au0, au1, av0, av1, ph0, ph1);
   
-	Inst_cart_rom: cart_rom PORT MAP(
-		clk => vid_clk,
-		data => d,
-		addr => a
+	Inst_cart_rom: work.cart_rom PORT MAP(
+		clock => vid_clk,
+		q => d,
+		address => a,
+		wren => '0',
+		data => (others => '0')
 	);		 
+
 	--brd_CartTable: CartTable
    --     port map(ph0, cart_info, cart_max, std_logic_vector(cart_cntr));
 	

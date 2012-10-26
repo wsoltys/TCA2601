@@ -51,8 +51,8 @@ library ieee;
 	use ieee.std_logic_unsigned.all;
 	use ieee.numeric_std.all;
 
-library UNISIM;
-	use UNISIM.Vcomponents.all;
+--library UNISIM;
+--	use UNISIM.Vcomponents.all;
 
 entity VGA_SCANDBL is
 	port (
@@ -95,36 +95,18 @@ architecture RTL of VGA_SCANDBL is
 	signal vs_cnt      : std_logic_vector(2 downto 0) := (others => '0');
 begin
 	rgb_in <= I_B & I_G & I_R;
-	u_ram : RAMB16_S9_S9
-	generic map (
-		SIM_COLLISION_CHECK => "generate_x_only"
-	)
-	port map (
-		-- input
-		DOA               => open,
-		DIA               => rgb_in,
-		DOPA              => open,
-		DIPA              => "0",
-		ADDRA(10)         => '0',
-		ADDRA(9)          => bank_i,
-		ADDRA(8 downto 0) => hpos_i,
-		WEA               => '1',
-		ENA               => '1',
-		SSRA              => '0',
-		CLKA              => CLK,
 
-		-- output
-		DOB               => rgb_out,
-		DIB               => x"00",
-		DOPB              => open,
-		DIPB              => "0",
-		ADDRB(10)         => '0',
-		ADDRB(9)          => bank_o,
-		ADDRB(8 downto 0) => hpos_o,
-		WEB               => '0',
-		ENB               => '1',
-		SSRB              => '0',
-		CLKB              => CLK_X2
+
+u_ram : work.vga_framebuffer
+	port map (
+		rdaddress	=> bank_o & hpos_o,
+		rdclock		=> CLK_X2,
+		q				=> rgb_out,
+
+		wraddress	=> bank_i & hpos_i,
+		wrclock		=> CLK,
+		wren			=> '1',
+		data			=> rgb_in
 	);
 
 CLK_DUP <= CLK;

@@ -4,9 +4,6 @@ library ieee;
   use ieee.std_logic_unsigned.all;
   use ieee.numeric_std.all;
 
-library UNISIM;
-  use UNISIM.Vcomponents.all;
-
 entity cart_rom is
   port (
     CLK         : in    std_logic;
