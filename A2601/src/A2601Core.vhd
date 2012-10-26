@@ -46,9 +46,9 @@ end A2601;
 
 architecture arch of A2601 is
 
-    attribute pullup: string;
-    attribute pullup of pa: signal is "TRUE";
-    attribute pullup of pb: signal is "TRUE";
+--    attribute pullup: string;
+--    attribute pullup of pa: signal is "TRUE";
+--    attribute pullup of pb: signal is "TRUE";
 
     component A6507 is
         port(clk: in std_logic;

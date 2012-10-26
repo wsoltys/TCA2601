@@ -10,7 +10,6 @@ entity main is
 	port (
 -- Clocks
 		clk8 : in std_logic;
-		phi2_n : in std_logic;
 		dotclock_n : in std_logic;
 
 -- Bus
@@ -37,18 +36,6 @@ entity main is
 		usart_rts : in std_logic;
 		usart_cts : in std_logic;
 
--- SDRam
-		sd_clk : out std_logic;
-		sd_data : inout unsigned(15 downto 0);
-		sd_addr : out unsigned(12 downto 0);
-		sd_we_n : out std_logic;
-		sd_ras_n : out std_logic;
-		sd_cas_n : out std_logic;
-		sd_ba_0 : out std_logic;
-		sd_ba_1 : out std_logic;
-		sd_ldqm : out std_logic;
-		sd_udqm : out std_logic;
-
 -- Video
 		red : out unsigned(4 downto 0);
 		grn : out unsigned(4 downto 0);
@@ -68,25 +55,21 @@ architecture rtl of main is
 	type state_t is (TEST_IDLE, TEST_FILL, TEST_FILL_W, TEST_CHECK, TEST_CHECK_W, TEST_ERROR);
 	
 -- System clocks
-	signal vid_clk: std_logic;
-	signal sysclk : std_logic;
-	signal clk_150 : std_logic;
-	signal sd_clk_loc : std_logic;
-	signal clk_locked : std_logic;
-	signal ena_1mhz : std_logic;
-	signal ena_1khz : std_logic;
-	signal phi2 : std_logic;
-	signal no_clock : std_logic;
+	signal vid_clk: std_logic := '0';
+	signal sysclk : std_logic := '0';
+	signal clk_locked : std_logic := '0';
+	signal ena_1mhz : std_logic := '0';
+	signal ena_1khz : std_logic := '0';
 
-	signal reset_button_n : std_logic;
+	signal reset_button_n : std_logic := '0';
 	
 -- Global signals
-	signal reset : std_logic;
-	signal end_of_pixel : std_logic;
+	signal reset : std_logic := '0';
+	signal end_of_pixel : std_logic := '0';
 
 -- RAM Test
 	signal state : state_t := TEST_IDLE;
-	signal noise_bits : unsigned(7 downto 0);
+	signal noise_bits : unsigned(7 downto 0) := (others => '0');
 	
 -- MUX
 	signal mux_clk_reg : std_logic := '0';
@@ -94,68 +77,21 @@ architecture rtl of main is
 	signal mux_d_reg : unsigned(3 downto 0) := (others => '1');
 
 -- 4 Port joystick adapter
-	signal video_joystick_shift_reg : std_logic;
+	signal video_joystick_shift_reg : std_logic := '0';
 
--- C64 keyboard (on joystick adapter)
-	signal video_keyboard_reg : std_logic;
-	
 -- LEDs
-	signal led_green : std_logic;
-	signal led_red : std_logic;
-
--- IR
-	signal ir : std_logic := '1';
-
--- PS/2 Keyboard
-	signal ps2_keyboard_clk_in : std_logic;
-	signal ps2_keyboard_dat_in : std_logic;
-	signal ps2_keyboard_clk_out : std_logic;
-	signal ps2_keyboard_dat_out : std_logic;
-
-	signal keyboard_trigger : std_logic;
-	signal keyboard_scancode : unsigned(7 downto 0);
-
--- PS/2 Mouse
-	signal ps2_mouse_clk_in: std_logic;
-	signal ps2_mouse_dat_in: std_logic;
-	signal ps2_mouse_clk_out: std_logic;
-	signal ps2_mouse_dat_out: std_logic;
-
-	signal mouse_present : std_logic;
-	signal mouse_active : std_logic;
-	signal mouse_trigger : std_logic;
-	signal mouse_left_button : std_logic;
-	signal mouse_middle_button : std_logic;
-	signal mouse_right_button : std_logic;
-	signal mouse_delta_x : signed(8 downto 0);
-	signal mouse_delta_y : signed(8 downto 0);
-	
-	signal cursor_x : signed(11 downto 0) := to_signed(0, 12);
-	signal cursor_y : signed(11 downto 0) := to_signed(0, 12);
-	
-	signal sdram_req : std_logic := '0';
-	signal sdram_ack : std_logic;
-	signal sdram_we : std_logic := '0';
-	signal sdram_a : unsigned(24 downto 0) := (others => '0');
-	signal sdram_d : unsigned(7 downto 0);
-	signal sdram_q : unsigned(7 downto 0);
+	signal led_green : std_logic := '0';
+	signal led_red : std_logic := '0';
 
 -- VGA
-	signal currentX : unsigned(11 downto 0);
-	signal currentY : unsigned(11 downto 0);
-	signal hsync : std_logic;
-	signal vsync : std_logic;
+	signal currentX : unsigned(11 downto 0) := (others => '0');
+	signal currentY : unsigned(11 downto 0) := (others => '0');
+	signal hsync : std_logic := '0';
+	signal vsync : std_logic := '0';
 	
-	signal iec_cnt : unsigned(2 downto 0);
-	signal iec_reg : unsigned(3 downto 0);
-	signal iec_result : unsigned(23 downto 0);
-	signal vga_id : unsigned(3 downto 0);
-	
-	signal video_amiga : std_logic := '0';
-
-	signal red_reg : unsigned(4 downto 0);
-	signal grn_reg : unsigned(4 downto 0);
-	signal blu_reg : unsigned(4 downto 0);
+	signal red_reg : unsigned(4 downto 0) := (others => '0');
+	signal grn_reg : unsigned(4 downto 0) := (others => '0');
+	signal blu_reg : unsigned(4 downto 0) := (others => '0');
 	
 -- Sound
 	signal sigma_l : std_logic := '0';
@@ -164,44 +100,39 @@ architecture rtl of main is
 	signal sigmaR_reg : std_logic := '0';
 
 -- Docking station
-	signal docking_station : std_logic;
-	signal docking_ena : std_logic;
-	signal docking_keys : unsigned(63 downto 0);
-	signal docking_restore_n : std_logic;
-	signal docking_irq : std_logic;
-	signal irq_n : std_logic;
+	signal docking_ena : std_logic := '0';
+	signal docking_irq : std_logic := '0';
+	signal irq_n : std_logic := '0';
 	
-	signal docking_joystick1 : unsigned(5 downto 0);
-	signal docking_joystick2 : unsigned(5 downto 0);
-	signal docking_joystick3 : unsigned(5 downto 0);
-	signal docking_joystick4 : unsigned(5 downto 0);
-	signal docking_amiga_reset_n : std_logic;
-	signal docking_amiga_scancode : unsigned(7 downto 0);
+	signal docking_joystick1 : unsigned(5 downto 0) := (others => '0');
+	signal docking_joystick2 : unsigned(5 downto 0) := (others => '0');
+	signal docking_joystick3 : unsigned(5 downto 0) := (others => '0');
+	signal docking_joystick4 : unsigned(5 downto 0) := (others => '0');
 	
 -- A2601
-	signal audio: std_logic;
-   signal O_VSYNC: std_logic;
-   signal O_HSYNC: std_logic;
-	signal O_VIDEO_R: std_logic_vector(3 downto 0);
-	signal O_VIDEO_G: std_logic_vector(3 downto 0);
-	signal O_VIDEO_B: std_logic_vector(3 downto 0);			
-	signal res: std_logic;
-	signal p_l: std_logic;
-	signal p_r: std_logic;
-	signal p_a: std_logic;
-	signal p_u: std_logic;
-	signal p_d: std_logic;
-	signal p2_l: std_logic;
-	signal p2_r: std_logic;
-	signal p2_a: std_logic;
-	signal p2_u: std_logic;
-	signal p2_d: std_logic;
-	signal p_s: std_logic;
-	signal p_bs: std_logic;			
-	signal LED: std_logic_vector(2 downto 0);
-	signal I_SW : std_logic_vector(2 downto 0);
-	signal JOYSTICK_GND: std_logic;
-	signal JOYSTICK2_GND: std_logic;
+	signal audio: std_logic := '0';
+   signal O_VSYNC: std_logic := '0';
+   signal O_HSYNC: std_logic := '0';
+	signal O_VIDEO_R: std_logic_vector(3 downto 0) := (others => '0');
+	signal O_VIDEO_G: std_logic_vector(3 downto 0) := (others => '0');
+	signal O_VIDEO_B: std_logic_vector(3 downto 0) := (others => '0');			
+	signal res: std_logic := '0';
+	signal p_l: std_logic := '0';
+	signal p_r: std_logic := '0';
+	signal p_a: std_logic := '0';
+	signal p_u: std_logic := '0';
+	signal p_d: std_logic := '0';
+	signal p2_l: std_logic := '0';
+	signal p2_r: std_logic := '0';
+	signal p2_a: std_logic := '0';
+	signal p2_u: std_logic := '0';
+	signal p2_d: std_logic := '0';
+	signal p_s: std_logic := '0';
+--	signal p_bs: std_logic;
+--	signal LED: std_logic_vector(2 downto 0);
+--	signal I_SW : std_logic_vector(2 downto 0) := (others => '0');
+--	signal JOYSTICK_GND: std_logic;
+--	signal JOYSTICK2_GND: std_logic;
 
 	
 	procedure box(signal video : inout std_logic; x : signed; y : signed; xpos : integer; ypos : integer; value : std_logic) is
@@ -240,16 +171,17 @@ begin
          p2_u => p2_u,
          p2_d => p2_d,
          p_s => p_s,
-         p_bs => p_bs,
-			LED => LED,
-			I_SW => I_SW,
-         JOYSTICK_GND => JOYSTICK_GND,
-			JOYSTICK2_GND => JOYSTICK2_GND
+         p_bs => open,
+			LED => open,
+			I_SW => "111",
+         JOYSTICK_GND => open,
+			JOYSTICK2_GND => open
 		);
 
-	process(red_reg, grn_reg, blu_reg)
+	process(red_reg, grn_reg, blu_reg, O_VIDEO_R, O_VIDEO_G, O_VIDEO_B, O_HSYNC, O_VSYNC, audio)
 	begin
-		if true then
+		if false then
+			-- VGA test
 			red <= red_reg;
 			grn <= grn_reg;
 			blu <= blu_reg;
@@ -258,11 +190,10 @@ begin
 			sigmaL <= sigmaL_reg;
 			sigmaR <= sigmaR_reg;
 		else
+			-- A2601
 			red <= unsigned(O_VIDEO_R) & "0";
 			grn <= unsigned(O_VIDEO_G) & "0";
 			blu <= unsigned(O_VIDEO_B) & "0";
-			nHSync <= not hsync;
-			nVSync <= not vsync;
 			nHSync <= not O_HSYNC;
 			nVSync <= not O_VSYNC;
 			sigmaL <= audio;
@@ -270,7 +201,7 @@ begin
 		end if;
 	end process;
 
-	res <= '1';
+	res <= clk_locked;
 	p_l <= docking_joystick1(0);
 	p_r <= docking_joystick1(1);
 	p_a <= docking_joystick1(2);
@@ -282,11 +213,11 @@ begin
 	p2_u <= docking_joystick2(3);
 	p2_d <= docking_joystick2(4);
 	p_s <= '1';
-	p_bs <= '1';
+	-- p_bs <= '1';
 	-- LED: std_logic_vector(2 downto 0);
-	-- I_SW : std_logic_vector(2 downto 0);
-	JOYSTICK_GND <= '0';
-	JOYSTICK2_GND <= '0';
+	-- I_SW <= '0'
+	-- JOYSTICK_GND <= '0';
+	-- JOYSTICK2_GND <= '0';
 
 	
 -- -----------------------------------------------------------------------
@@ -297,12 +228,11 @@ begin
 			inclk0 => clk8,
 			c0 => sysclk,
 			c1 => open, 
-			c2 => clk_150,
-			c3 => sd_clk_loc,
+			c2 => open,
+			c3 => open,
 			c4 => vid_clk,
 			locked => clk_locked
 		);
-	sd_clk <= sd_clk_loc;
 
 -- -----------------------------------------------------------------------
 -- 1 Mhz and 1 Khz clocks
@@ -332,12 +262,8 @@ begin
 	begin
 		if rising_edge(sysclk) then
 			if ena_1khz = '1' then
-				if (mouse_left_button = '1') or (usart_cts = '0') then
-					sigma_l <= not sigma_l;
-				end if;
-				if (mouse_right_button = '1') or (reset_button_n = '0') then
-					sigma_r <= not sigma_r;
-				end if;
+				sigma_l <= not sigma_l;
+				sigma_r <= not sigma_r;
 			end if;
 		end if;
 	end process;
@@ -354,7 +280,7 @@ begin
 			ena_1mhz => ena_1mhz,
 			enable => docking_ena,
 			
-			docking_station => docking_station,
+			docking_station => '1',
 			
 			dotclock_n => dotclock_n,
 			io_ef_n => ioef_n,
@@ -366,13 +292,13 @@ begin
 			joystick2 => docking_joystick2,
 			joystick3 => docking_joystick3,
 			joystick4 => docking_joystick4,
-			keys => docking_keys,
-			restore_key_n => docking_restore_n,
+			keys => open,
+			restore_key_n => open,
 			
 			amiga_power_led => led_green,
 			amiga_drive_led => led_red,
-			amiga_reset_n => docking_amiga_reset_n,
-			amiga_scancode => docking_amiga_scancode
+			amiga_reset_n => open,
+			amiga_scancode => open
 		);
 
 -- -----------------------------------------------------------------------
@@ -396,14 +322,6 @@ begin
 					irq_n <= mux_q(2);
 				when X"B" =>
 					reset_button_n <= mux_q(1);
-					ir <= mux_q(3);
-				when X"A" =>
-					vga_id <= mux_q;
-				when X"E" =>
-					ps2_keyboard_dat_in <= mux_q(0);
-					ps2_keyboard_clk_in <= mux_q(1);
-					ps2_mouse_dat_in <= mux_q(2);
-					ps2_mouse_clk_in <= mux_q(3);
 				when others =>
 					null;
 				end case;
@@ -420,9 +338,7 @@ begin
 				case mux_reg is
 				when X"7" =>
 					mux_d_reg <= "1111";
-					if docking_station = '1' then
-						mux_d_reg <= "1" & docking_irq & "11";
-					end if;
+					mux_d_reg <= "1" & docking_irq & "11";
 					mux_reg <= X"6";
 				when X"6" =>
 					mux_d_reg <= "1111";
@@ -434,15 +350,8 @@ begin
 					mux_d_reg <= "10" & led_green & led_red;
 					mux_reg <= X"B";
 				when X"B" =>
-					mux_d_reg <= iec_reg;
-					mux_reg <= X"D";
-					docking_ena <= '1';
-				when X"D" =>
-					mux_d_reg(0) <= ps2_keyboard_dat_out;
-					mux_d_reg(1) <= ps2_keyboard_clk_out;
-					mux_d_reg(2) <= ps2_mouse_dat_out;
-					mux_d_reg(3) <= ps2_mouse_clk_out;
 					mux_reg <= X"E";
+					docking_ena <= '1';
 				when X"E" =>
 					mux_d_reg <= "1111";
 					mux_reg <= X"7";
@@ -506,7 +415,7 @@ begin
 -- -----------------------------------------------------------------------
 -- Show state of joysticks on docking-station
 -- -----------------------------------------------------------------------
-	process(sysclk) is
+	process(sysclk, currentX, currentY) is
 		variable x : signed(11 downto 0);
 		variable y : signed(11 downto 0);
 		variable joysticks : unsigned(23 downto 0);
@@ -584,51 +493,8 @@ begin
 					blu_reg <= (others => '1');
 				end if;
 
-			-- Draw mouse button tests
-				if (abs(x - 64) < 7) and (abs(y - 128) < 7) and (mouse_left_button = '1') then
-					red_reg <= (others => '1');
-					grn_reg <= (others => '1');
-				elsif (abs(x - 64) = 7) and (abs(y - 128) < 7) then
-					red_reg <= (others => '1');
-					grn_reg <= (others => '1');
-				elsif (abs(x - 64) < 7) and (abs(y - 128) = 7) then
-					red_reg <= (others => '1');
-					grn_reg <= (others => '1');
-				end if;
-
-				if (abs(x - 96) < 7) and (abs(y - 128) < 7) and (mouse_middle_button = '1') then
-					red_reg <= (others => '1');
-					grn_reg <= (others => '1');
-				elsif (abs(x - 96) = 7) and (abs(y - 128) < 7) then
-					red_reg <= (others => '1');
-					grn_reg <= (others => '1');
-				elsif (abs(x - 96) < 7) and (abs(y - 128) = 7) then
-					red_reg <= (others => '1');
-					grn_reg <= (others => '1');
-				end if;
-
-				if (abs(x - 128) < 7) and (abs(y - 128) < 7) and (mouse_right_button = '1') then
-					red_reg <= (others => '1');
-					grn_reg <= (others => '1');
-				elsif (abs(x - 128) = 7) and (abs(y - 128) < 7) then
-					red_reg <= (others => '1');
-					grn_reg <= (others => '1');
-				elsif (abs(x - 128) < 7) and (abs(y - 128) = 7) then
-					red_reg <= (others => '1');
-					grn_reg <= (others => '1');
-				end if;
-			
-			-- clock
-				if (abs(x - 64) < 7) and (abs(y - 192) < 7) and (no_clock = '0') then
-					grn_reg <= (others => '1');
-				elsif (abs(x - 64) = 7) and (abs(y - 192) < 7) then
-					grn_reg <= (others => '1');
-				elsif (abs(x - 64) < 7) and (abs(y - 192) = 7) then
-					grn_reg <= (others => '1');
-				end if;
-
 			-- docking station
-				if (abs(x - 96) < 7) and (abs(y - 192) < 7) and (docking_station = '1') then
+				if (abs(x - 96) < 7) and (abs(y - 192) < 7) then
 					grn_reg <= (others => '1');
 				elsif (abs(x - 96) = 7) and (abs(y - 192) < 7) then
 					grn_reg <= (others => '1');
@@ -637,25 +503,12 @@ begin
 				end if;
 				
 			-- Draw joystick status
-				if docking_station = '1' then
-					if video_joystick_shift_reg = '1'
-					or video_keyboard_reg = '1'
-					or video_amiga = '1' then
-						red_reg <= (others => '1');
-						grn_reg <= (others => '1');
-						blu_reg <= (others => '1');
-					end if;
+				if video_joystick_shift_reg = '1' then
+					red_reg <= (others => '1');
+					grn_reg <= (others => '1');
+					blu_reg <= (others => '1');
 				end if;
 				
-			-- Draw mouse cursor
-				if mouse_present = '1' then
-					if (abs(x - cursor_x) < 5) and (abs(y - cursor_y) < 5) then
-						red_reg <= (others => '1');
-						grn_reg <= (others => '1');
-						blu_reg <= (others => '0');
-					end if;
-				end if;
-
 			--
 			-- One pixel border around the screen
 				if (currentX = 0) or (currentX = 639) or (currentY =0) or (currentY = 479) then
