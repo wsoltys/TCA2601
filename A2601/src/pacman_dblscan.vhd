@@ -97,13 +97,15 @@ begin
 	rgb_in <= I_B & I_G & I_R;
 
 
-u_ram : work.vga_framebuffer
+u_ram : entity work.vga_framebuffer
 	port map (
-		rdaddress	=> bank_o & hpos_o,
+		rdaddress(9)	=> bank_o,
+		rdaddress(8 downto 0)	=> hpos_o,
 		rdclock		=> CLK_X2,
 		q				=> rgb_out,
 
-		wraddress	=> bank_i & hpos_i,
+		wraddress(9)	=> bank_i,
+		wraddress(8 downto 0)	=> hpos_i,
 		wrclock		=> CLK,
 		wren			=> '1',
 		data			=> rgb_in

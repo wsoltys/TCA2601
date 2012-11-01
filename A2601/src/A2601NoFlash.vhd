@@ -136,8 +136,6 @@ architecture arch of A2601NoFlash is
     signal pb: std_logic_vector(7 downto 0);
     signal inpt4: std_logic;
     signal inpt5: std_logic;
-    signal colu: std_logic_vector(6 downto 0);
-    signal csyn: std_logic;
     signal au0: std_logic;
     signal au1: std_logic;
     signal av0: std_logic_vector(3 downto 0);
@@ -157,7 +155,6 @@ architecture arch of A2601NoFlash is
     signal vsyn: std_logic;
 	 
 	 signal ctrl_cntr: unsigned(3 downto 0);
-	 signal gsel: std_logic;
     signal p_fn: std_logic;
 
 		signal rst_cntr: unsigned(12 downto 0) := "0000000000000";
@@ -214,12 +211,12 @@ architecture arch of A2601NoFlash is
 begin
 	  
     ms_A2601: A2601
-        port map(vid_clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, inpt4, inpt5, colu, csyn, vsyn, hsyn, rgbx2, cv, au0, au1, av0, av1, ph0, ph1);
+        port map(vid_clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, inpt4, inpt5, open, open, vsyn, hsyn, rgbx2, cv, au0, au1, av0, av1, ph0, ph1);
   
-	Inst_cart_rom: work.cart_rom PORT MAP(
+	Inst_cart_rom: entity work.cart_rom PORT MAP(
 		clock => vid_clk,
 		q => d,
-		address => a,
+		address => a(10 downto 0),
 		wren => '0',
 		data => (others => '0')
 	);		 
@@ -268,7 +265,6 @@ begin
 					 pa(3 downto 0) <= p2_r & p2_l & p2_d & p2_u;
                 inpt4 <= p_a;
 					 inpt5 <= p2_a;
-                gsel <= not p_s;
 					 
 					 --switches
 					 for i in 0 to 1

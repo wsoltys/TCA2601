@@ -57,7 +57,6 @@ architecture rtl of main is
 -- System clocks
 	signal vid_clk: std_logic := '0';
 	signal sysclk : std_logic := '0';
-	signal clk_locked : std_logic := '0';
 	signal ena_1mhz : std_logic := '0';
 	signal ena_1khz : std_logic := '0';
 
@@ -200,19 +199,24 @@ begin
 			sigmaR <= audio;
 		end if;
 	end process;
-
-	res <= clk_locked;
-	p_l <= docking_joystick1(0);
-	p_r <= docking_joystick1(1);
-	p_a <= docking_joystick1(2);
-	p_u <= docking_joystick1(3);
-	p_d <= docking_joystick1(4);
+			
+	res <= '0';
+	p_l <= reset_button_n;
+	p_r <= freeze_n;
+	p_a <= usart_cts;
+	p_u <= '1';
+	p_d <= '1';
+--	p_l <= docking_joystick1(0);
+--	p_r <= docking_joystick1(1);
+--	p_a <= docking_joystick1(2);
+--	p_u <= docking_joystick1(3);
+--	p_d <= docking_joystick1(4);
 	p2_l <= docking_joystick2(0);
 	p2_r <= docking_joystick2(1);
 	p2_a <= docking_joystick2(2);
 	p2_u <= docking_joystick2(3);
 	p2_d <= docking_joystick2(4);
-	p_s <= '1';
+	p_s <= freeze_n;
 	-- p_bs <= '1';
 	-- LED: std_logic_vector(2 downto 0);
 	-- I_SW <= '0'
@@ -231,7 +235,7 @@ begin
 			c2 => open,
 			c3 => open,
 			c4 => vid_clk,
-			locked => clk_locked
+			locked => open
 		);
 
 -- -----------------------------------------------------------------------
@@ -440,7 +444,7 @@ begin
 -- -----------------------------------------------------------------------
 -- VGA colors
 -- -----------------------------------------------------------------------
-	process(sysclk)
+	process(sysclk, currentX, currentY)
 		variable x : signed(11 downto 0);
 		variable y : signed(11 downto 0);
 	begin

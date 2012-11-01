@@ -42,7 +42,7 @@ USE altera_mf.all;
 ENTITY cart_rom IS
 	PORT
 	(
-		address		: IN STD_LOGIC_VECTOR (13 DOWNTO 0);
+		address		: IN STD_LOGIC_VECTOR (10 DOWNTO 0);
 		clock		: IN STD_LOGIC  := '1';
 		data		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 		wren		: IN STD_LOGIC ;
@@ -76,7 +76,7 @@ ARCHITECTURE SYN OF cart_rom IS
 		width_byteena_a		: NATURAL
 	);
 	PORT (
-			address_a	: IN STD_LOGIC_VECTOR (13 DOWNTO 0);
+			address_a	: IN STD_LOGIC_VECTOR (10 DOWNTO 0);
 			clock0	: IN STD_LOGIC ;
 			data_a	: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 			wren_a	: IN STD_LOGIC ;
@@ -95,13 +95,13 @@ BEGIN
 		intended_device_family => "Cyclone III",
 		lpm_hint => "ENABLE_RUNTIME_MOD=NO",
 		lpm_type => "altsyncram",
-		numwords_a => 16384,
+		numwords_a => 2048,
 		operation_mode => "SINGLE_PORT",
 		outdata_aclr_a => "NONE",
 		outdata_reg_a => "CLOCK0",
 		power_up_uninitialized => "FALSE",
 		read_during_write_mode_port_a => "NEW_DATA_NO_NBE_READ",
-		widthad_a => 14,
+		widthad_a => 11,
 		width_a => 8,
 		width_byteena_a => 1
 	)
@@ -140,7 +140,7 @@ END SYN;
 -- Retrieval info: PRIVATE: JTAG_ID STRING "NONE"
 -- Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
 -- Retrieval info: PRIVATE: MIFfilename STRING "rom.hex"
--- Retrieval info: PRIVATE: NUMWORDS_A NUMERIC "16384"
+-- Retrieval info: PRIVATE: NUMWORDS_A NUMERIC "2048"
 -- Retrieval info: PRIVATE: RAM_BLOCK_TYPE NUMERIC "0"
 -- Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_PORT_A NUMERIC "3"
 -- Retrieval info: PRIVATE: RegAddr NUMERIC "1"
@@ -150,7 +150,7 @@ END SYN;
 -- Retrieval info: PRIVATE: SingleClock NUMERIC "1"
 -- Retrieval info: PRIVATE: UseDQRAM NUMERIC "1"
 -- Retrieval info: PRIVATE: WRCONTROL_ACLR_A NUMERIC "0"
--- Retrieval info: PRIVATE: WidthAddr NUMERIC "14"
+-- Retrieval info: PRIVATE: WidthAddr NUMERIC "11"
 -- Retrieval info: PRIVATE: WidthData NUMERIC "8"
 -- Retrieval info: PRIVATE: rden NUMERIC "0"
 -- Retrieval info: LIBRARY: altera_mf altera_mf.altera_mf_components.all
@@ -160,21 +160,21 @@ END SYN;
 -- Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone III"
 -- Retrieval info: CONSTANT: LPM_HINT STRING "ENABLE_RUNTIME_MOD=NO"
 -- Retrieval info: CONSTANT: LPM_TYPE STRING "altsyncram"
--- Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "16384"
+-- Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "2048"
 -- Retrieval info: CONSTANT: OPERATION_MODE STRING "SINGLE_PORT"
 -- Retrieval info: CONSTANT: OUTDATA_ACLR_A STRING "NONE"
 -- Retrieval info: CONSTANT: OUTDATA_REG_A STRING "CLOCK0"
 -- Retrieval info: CONSTANT: POWER_UP_UNINITIALIZED STRING "FALSE"
 -- Retrieval info: CONSTANT: READ_DURING_WRITE_MODE_PORT_A STRING "NEW_DATA_NO_NBE_READ"
--- Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "14"
+-- Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "11"
 -- Retrieval info: CONSTANT: WIDTH_A NUMERIC "8"
 -- Retrieval info: CONSTANT: WIDTH_BYTEENA_A NUMERIC "1"
--- Retrieval info: USED_PORT: address 0 0 14 0 INPUT NODEFVAL "address[13..0]"
+-- Retrieval info: USED_PORT: address 0 0 11 0 INPUT NODEFVAL "address[10..0]"
 -- Retrieval info: USED_PORT: clock 0 0 0 0 INPUT VCC "clock"
 -- Retrieval info: USED_PORT: data 0 0 8 0 INPUT NODEFVAL "data[7..0]"
 -- Retrieval info: USED_PORT: q 0 0 8 0 OUTPUT NODEFVAL "q[7..0]"
 -- Retrieval info: USED_PORT: wren 0 0 0 0 INPUT NODEFVAL "wren"
--- Retrieval info: CONNECT: @address_a 0 0 14 0 address 0 0 14 0
+-- Retrieval info: CONNECT: @address_a 0 0 11 0 address 0 0 11 0
 -- Retrieval info: CONNECT: @clock0 0 0 0 0 clock 0 0 0 0
 -- Retrieval info: CONNECT: @data_a 0 0 8 0 data 0 0 8 0
 -- Retrieval info: CONNECT: @wren_a 0 0 0 0 wren 0 0 0 0
