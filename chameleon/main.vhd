@@ -74,6 +74,8 @@ architecture rtl of main is
 	signal mux_clk_reg : std_logic := '0';
 	signal mux_reg : unsigned(3 downto 0) := (others => '1');
 	signal mux_d_reg : unsigned(3 downto 0) := (others => '1');
+	signal debug_reg_latched : unsigned(7 downto 0) := (others => '1');
+	signal debug_reg : unsigned(7 downto 0) := (others => '1');
 
 -- 4 Port joystick adapter
 	signal video_joystick_shift_reg : std_logic := '0';
@@ -83,8 +85,6 @@ architecture rtl of main is
 	signal led_red : std_logic := '0';
 
 -- VGA
-	signal currentX : unsigned(11 downto 0) := (others => '0');
-	signal currentY : unsigned(11 downto 0) := (others => '0');
 	signal hsync : std_logic := '0';
 	signal vsync : std_logic := '0';
 	
@@ -126,24 +126,15 @@ architecture rtl of main is
 	signal p2_a: std_logic := '0';
 	signal p2_u: std_logic := '0';
 	signal p2_d: std_logic := '0';
-	signal p_s: std_logic := '0';
+	signal p_start: std_logic := '0';
+	signal p_select: std_logic := '0';
+	signal next_cartridge: std_logic := '0';
 --	signal p_bs: std_logic;
 --	signal LED: std_logic_vector(2 downto 0);
 --	signal I_SW : std_logic_vector(2 downto 0) := (others => '0');
 --	signal JOYSTICK_GND: std_logic;
 --	signal JOYSTICK2_GND: std_logic;
 
-	
-	procedure box(signal video : inout std_logic; x : signed; y : signed; xpos : integer; ypos : integer; value : std_logic) is
-	begin
-		if (abs(x - xpos) < 5) and (abs(y - ypos) < 5) and (value = '1') then
-			video <= '1';
-		elsif (abs(x - xpos) = 5) and (abs(y - ypos) < 5) then
-			video <= '1';
-		elsif (abs(x - xpos) < 5) and (abs(y - ypos) = 5) then
-			video <= '1';
-		end if;		
-	end procedure;
 begin
 
 -- -----------------------------------------------------------------------
@@ -169,7 +160,9 @@ begin
          p2_a => p2_a,
          p2_u => p2_u,
          p2_d => p2_d,
-         p_s => p_s,
+         p_start => p_start,
+         p_select => p_select,
+			next_cartridge => '0', --next_cartridge,
          p_bs => open,
 			LED => open,
 			I_SW => "111",
@@ -177,9 +170,20 @@ begin
 			JOYSTICK2_GND => open
 		);
 
+	myComputerInstance : entity work.MyComputer
+		port map (
+			clk_50mhz => vid_clk,
+			VGA_BLUE => blu_reg(4),
+			VGA_GREEN => grn_reg(4),
+			VGA_HSYNC => hsync,
+			VGA_RED => red_reg(4),
+			VGA_VSYNC => vsync,
+			debug => debug_reg
+		);
+
 	process(red_reg, grn_reg, blu_reg, O_VIDEO_R, O_VIDEO_G, O_VIDEO_B, O_HSYNC, O_VSYNC, audio)
 	begin
-		if false then
+		if true then
 			-- VGA test
 			red <= red_reg;
 			grn <= grn_reg;
@@ -201,22 +205,69 @@ begin
 	end process;
 			
 	res <= '0';
-	p_l <= reset_button_n;
-	p_r <= freeze_n;
-	p_a <= usart_cts;
-	p_u <= '1';
-	p_d <= '1';
---	p_l <= docking_joystick1(0);
+--	p_l <= reset_button_n;
+--	p_r <= freeze_n;
+--	p_a <= usart_cts;
+--	p_u <= '1';
+--	p_d <= '1';
+--	p2_l <= reset_button_n;
+--	p2_r <= freeze_n;
+--	p2_a <= usart_cts;
+--	p2_u <= '1';
+--	p2_d <= '1';
+	--p_l <= docking_joystick1(0);
 --	p_r <= docking_joystick1(1);
 --	p_a <= docking_joystick1(2);
---	p_u <= docking_joystick1(3);
---	p_d <= docking_joystick1(4);
-	p2_l <= docking_joystick2(0);
-	p2_r <= docking_joystick2(1);
-	p2_a <= docking_joystick2(2);
-	p2_u <= docking_joystick2(3);
-	p2_d <= docking_joystick2(4);
-	p_s <= freeze_n;
+	--p_u <= docking_joystick1(3);
+	--p_d <= docking_joystick1(4);
+
+	-- 9 pin d-sub joystick pinout:
+	-- pin 1: up
+	-- pin 2: down
+	-- pin 3: left
+	-- pin 4: right
+	-- pin 6: fire
+	
+	-- Atari 2600, 6532 ports:
+	-- PA0: right joystick, up
+	-- PA1: right joystick, down
+	-- PA2: right joystick, left
+	-- PA3: right joystick, right
+	-- PA4: left joystick, up
+	-- PA5: left joystick, down
+	-- PA6: left joystick, left
+	-- PA7: left joystick, right
+	-- PB0: start
+	-- PB1: select
+	-- PB3: B/W, color
+	-- PB6: left difficulty
+	-- PB7: right difficulty
+
+	-- Atari 2600, TIA input:
+	-- I5: right joystick, fire
+	-- I6: left joystick, fire
+	
+	-- pinout docking station joystick 1/2:
+	-- bit 0: up
+	-- bit 1: down
+	-- bit 2: left
+	-- bit 3: right
+	-- bit 4: fire
+	p_l <= docking_joystick1(2);
+	p_r <= docking_joystick1(3);
+	p_a <= docking_joystick1(4);
+	p_u <= docking_joystick1(0);
+	p_d <= docking_joystick1(1);
+
+	p2_l <= docking_joystick2(2);
+	p2_r <= docking_joystick2(3);
+	p2_a <= docking_joystick2(4);
+	p2_u <= docking_joystick2(0);
+	p2_d <= docking_joystick2(1);
+	p_start <= freeze_n;
+	p_select <= usart_cts;
+	next_cartridge <= reset_button_n;
+--	p_s <= freeze_n;
 	-- p_bs <= '1';
 	-- LED: std_logic_vector(2 downto 0);
 	-- I_SW <= '0'
@@ -341,27 +392,19 @@ begin
 			if mux_clk_reg = '1' then
 				case mux_reg is
 				when X"7" =>
-					mux_d_reg <= "1111";
-					mux_d_reg <= "1" & docking_irq & "11";
-					mux_reg <= X"6";
-				when X"6" =>
-					mux_d_reg <= "1111";
-					mux_reg <= X"8";
-				when X"8" =>
-					mux_d_reg <= "1111";
-					mux_reg <= X"A";
-				when X"A" =>
-					mux_d_reg <= "10" & led_green & led_red;
-					mux_reg <= X"B";
-				when X"B" =>
-					mux_reg <= X"E";
-					docking_ena <= '1';
-				when X"E" =>
-					mux_d_reg <= "1111";
+					mux_d_reg <= debug_reg_latched(3 downto 0);
+					mux_reg <= X"0";
+				when X"0" =>
+					mux_d_reg <= debug_reg_latched(7 downto 4);
+					mux_reg <= X"1";
+					debug_reg_latched <= debug_reg;
+				when X"1" =>
+					--mux_d_reg <= "1111";
+					mux_d_reg <= "1101";
 					mux_reg <= X"7";
 				when others =>
-					mux_reg <= X"B";
-					mux_d_reg <= "10" & led_green & led_red;
+					mux_d_reg <= "1101";
+					mux_reg <= X"7";
 				end case;
 			end if;
 		end if;
@@ -383,152 +426,5 @@ begin
 			led => led_red,
 			led_1hz => led_green
 		);
-
--- -----------------------------------------------------------------------
--- VGA timing configured for 640x480
--- -----------------------------------------------------------------------
-	myVgaMaster : entity work.video_vga_master
-		generic map (
-			clkDivBits => 4
-		)
-		port map (
-			clk => sysclk,
-			-- 100 Mhz / (3+1) = 25 Mhz
-			clkDiv => X"3",
-
-			hSync => hSync,
-			vSync => vSync,
-
-			endOfPixel => end_of_pixel,
-			endOfLine => open,
-			endOfFrame => open,
-			currentX => currentX,
-			currentY => currentY,
-
-			-- Setup 640x480@60hz needs ~25 Mhz
-			hSyncPol => '0',
-			vSyncPol => '0',
-			xSize => to_unsigned(800, 12),
-			ySize => to_unsigned(525, 12),
-			xSyncFr => to_unsigned(656, 12), -- Sync pulse 96
-			xSyncTo => to_unsigned(752, 12),
-			ySyncFr => to_unsigned(500, 12), -- Sync pulse 2
-			ySyncTo => to_unsigned(502, 12)
-		);
-
--- -----------------------------------------------------------------------
--- Show state of joysticks on docking-station
--- -----------------------------------------------------------------------
-	process(sysclk, currentX, currentY) is
-		variable x : signed(11 downto 0);
-		variable y : signed(11 downto 0);
-		variable joysticks : unsigned(23 downto 0);
-	begin
-		x := signed(currentX);
-		y := signed(currentY);
-		if rising_edge(sysclk) then
-			joysticks := docking_joystick4 & docking_joystick3 & docking_joystick2 & docking_joystick1;
-			video_joystick_shift_reg <= '0';
-			for i in 0 to 23 loop
-				if (abs(x - (144 + (i+i/6)*16)) < 5) and (abs(y - 320) < 5) and (joysticks(23-i) = '1') then
-					video_joystick_shift_reg <= '1';
-				elsif (abs(x - (144 + (i+i/6)*16)) = 5) and (abs(y - 320) < 5) then
-					video_joystick_shift_reg <= '1';
-				elsif (abs(x - (144 + (i+i/6)*16)) < 5) and (abs(y - 320) = 5) then
-					video_joystick_shift_reg <= '1';
-				end if;
-			end loop;
-		end if;
-	end process;
-
--- -----------------------------------------------------------------------
--- VGA colors
--- -----------------------------------------------------------------------
-	process(sysclk, currentX, currentY)
-		variable x : signed(11 downto 0);
-		variable y : signed(11 downto 0);
-	begin
-		x := signed(currentX);
-		y := signed(currentY);
-		if rising_edge(sysclk) then
-			if end_of_pixel = '1' then
-				red_reg <= (others => '0');
-				grn_reg <= (others => '0');
-				blu_reg <= (others => '0');
-				if currentY < 256 then
-					case currentX(11 downto 7) is
-					when "00001" =>
-						red_reg <= currentX(6 downto 2);
-					when "00010" =>
-						grn_reg <= currentX(6 downto 2);
-					when "00011" =>
-						blu_reg <= currentX(6 downto 2);
-					when "00100" =>
-						red_reg <= currentX(6 downto 2);
-						grn_reg <= currentX(6 downto 2);
-						blu_reg <= currentX(6 downto 2);
-					when others =>
-						null;
-					end case;
-				end if;
-				
-			-- Draw 3 push button tests
-				if (abs(x - 64) < 7) and (abs(y - 64) < 7) and (usart_cts = '0') then
-					blu_reg <= (others => '1');
-				elsif (abs(x - 64) = 7) and (abs(y - 64) < 7) then
-					blu_reg <= (others => '1');
-				elsif (abs(x - 64) < 7) and (abs(y - 64) = 7) then
-					blu_reg <= (others => '1');
-				end if;
-
-				if (abs(x - 96) < 7) and (abs(y - 64) < 7) and (freeze_n = '0') then
-					blu_reg <= (others => '1');
-				elsif (abs(x - 96) = 7) and (abs(y - 64) < 7) then
-					blu_reg <= (others => '1');
-				elsif (abs(x - 96) < 7) and (abs(y - 64) = 7) then
-					blu_reg <= (others => '1');
-				end if;
-
-				if (abs(x - 128) < 7) and (abs(y - 64) < 7) and (reset_button_n = '0') then
-					blu_reg <= (others => '1');
-				elsif (abs(x - 128) = 7) and (abs(y - 64) < 7) then
-					blu_reg <= (others => '1');
-				elsif (abs(x - 128) < 7) and (abs(y - 64) = 7) then
-					blu_reg <= (others => '1');
-				end if;
-
-			-- docking station
-				if (abs(x - 96) < 7) and (abs(y - 192) < 7) then
-					grn_reg <= (others => '1');
-				elsif (abs(x - 96) = 7) and (abs(y - 192) < 7) then
-					grn_reg <= (others => '1');
-				elsif (abs(x - 96) < 7) and (abs(y - 192) = 7) then
-					grn_reg <= (others => '1');
-				end if;
-				
-			-- Draw joystick status
-				if video_joystick_shift_reg = '1' then
-					red_reg <= (others => '1');
-					grn_reg <= (others => '1');
-					blu_reg <= (others => '1');
-				end if;
-				
-			--
-			-- One pixel border around the screen
-				if (currentX = 0) or (currentX = 639) or (currentY =0) or (currentY = 479) then
-					red_reg <= (others => '1');
-					grn_reg <= (others => '1');
-					blu_reg <= (others => '1');
-				end if;
-			--
-			-- Never draw pixels outside the visual area
-				if (currentX >= 640) or (currentY >= 480) then
-					red_reg <= (others => '0');
-					grn_reg <= (others => '0');
-					blu_reg <= (others => '0');
-				end if;
-			end if;
-		end if;
-	end process;
 
 end architecture;

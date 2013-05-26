@@ -41,7 +41,7 @@ set_global_assignment -name DEVICE EP3C25E144C8
 set_global_assignment -name TOP_LEVEL_ENTITY main
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "12.0 SP2"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "16:03:22  OCTOBER 26, 2012"
-set_global_assignment -name LAST_QUARTUS_VERSION "12.0 SP2"
+set_global_assignment -name LAST_QUARTUS_VERSION 13.0
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name DEVICE_FILTER_PACKAGE TQFP
@@ -191,9 +191,6 @@ set_instance_assignment -name FAST_INPUT_REGISTER ON -to sd_data[3]
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to sd_data[2]
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to sd_data[1]
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to sd_data[0]
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
-set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVCMOS"
@@ -204,6 +201,26 @@ set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_DATA1_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name RESERVE_FLASH_NCE_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name EDA_TEST_BENCH_ENABLE_STATUS TEST_BENCH_MODE -section_id eda_simulation
+set_global_assignment -name EDA_NATIVELINK_SIMULATION_TEST_BENCH MyComputer_testbench -section_id eda_simulation
+set_global_assignment -name EDA_TEST_BENCH_NAME main_testbench -section_id eda_simulation
+set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id main_testbench
+set_global_assignment -name EDA_TEST_BENCH_RUN_SIM_FOR "10 ms" -section_id main_testbench
+set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME main_testbench -section_id main_testbench
+set_global_assignment -name EDA_TEST_BENCH_NAME MyComputer_testbench -section_id eda_simulation
+set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id MyComputer_testbench
+set_global_assignment -name EDA_TEST_BENCH_RUN_SIM_FOR "10 us" -section_id MyComputer_testbench
+set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME MyComputer_testbench -section_id MyComputer_testbench
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name VHDL_FILE ../YaGraphCon/MyComputer_testbench.vhd
+set_global_assignment -name VHDL_FILE ../YaGraphCon/OutputGenerator.vhd
+set_global_assignment -name VHDL_FILE ../YaGraphCon/Framebuffer.vhd
+set_global_assignment -name VHDL_FILE ../YaGraphCon/GraphicsAccelerator.vhd
+set_global_assignment -name VHDL_FILE ../YaGraphCon/YaGraphConPackage.vhd
+set_global_assignment -name VHDL_FILE ../YaGraphCon/YaGraphCon.vhd
+set_global_assignment -name VHDL_FILE ../YaGraphCon/MyComputer.vhd
 set_global_assignment -name VHDL_FILE ../chameleon/main_testbench.vhd
 set_global_assignment -name VHDL_FILE ../TIA/src/NTSCLookups.vhd
 set_global_assignment -name VHDL_FILE ../TIA/src/Common.vhd
@@ -220,7 +237,6 @@ set_global_assignment -name VHDL_FILE ../A6500/src/A6500.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/A2601NoFlash.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/A2601Core.vhd
 set_global_assignment -name VHDL_FILE ../chameleon/chameleon_docking_station.vhd
-set_global_assignment -name VHDL_FILE ../chameleon/video_vga_master.vhd
 set_global_assignment -name VHDL_FILE ../chameleon/chameleon_led.vhd
 set_global_assignment -name VHDL_FILE ../chameleon/chameleon_1mhz.vhd
 set_global_assignment -name VHDL_FILE ../chameleon/chameleon_1khz.vhd
@@ -229,13 +245,9 @@ set_global_assignment -name VHDL_FILE ../chameleon/main.vhd
 set_global_assignment -name QIP_FILE ../A2601/src/vga_framebuffer.qip
 set_global_assignment -name QIP_FILE ../A2601/src/cart_rom.qip
 set_global_assignment -name QIP_FILE ../chameleon/pll8.qip
-set_global_assignment -name EDA_TEST_BENCH_ENABLE_STATUS TEST_BENCH_MODE -section_id eda_simulation
-set_global_assignment -name EDA_NATIVELINK_SIMULATION_TEST_BENCH main_testbench -section_id eda_simulation
-set_global_assignment -name EDA_TEST_BENCH_NAME main_testbench -section_id eda_simulation
-set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id main_testbench
-set_global_assignment -name EDA_TEST_BENCH_RUN_SIM_FOR "10 ms" -section_id main_testbench
-set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME main_testbench -section_id main_testbench
-set_global_assignment -name EDA_TEST_BENCH_FILE ../chameleon/main_testbench.vhd -section_id main_testbench
 set_global_assignment -name VHDL_FILE ../TIA/src/VGAColorTable.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/DeltaSigma.vhd
+set_global_assignment -name QIP_FILE ../YaGraphCon/cpuRAM.qip
+set_global_assignment -name EDA_TEST_BENCH_FILE ../chameleon/main_testbench.vhd -section_id main_testbench
+set_global_assignment -name EDA_TEST_BENCH_FILE ../YaGraphCon/MyComputer_testbench.vhd -section_id MyComputer_testbench
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

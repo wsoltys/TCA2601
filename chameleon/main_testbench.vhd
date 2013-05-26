@@ -3,7 +3,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
 library work;
-use work.main;
+use work.all;
 
 entity main_testbench is
 end entity main_testbench;
@@ -36,7 +36,7 @@ architecture test of main_testbench is
 
 begin
 	
-	main_inst: entity work.main 
+	main_inst: entity main 
 		port map(
 			clk8 => clk8,
 			dotclock_n => dotclock_n,
