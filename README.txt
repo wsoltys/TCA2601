@@ -1,3 +1,12 @@
+Port of the A2601 FPGA implementation for the MiST
+---------------------------------------------------------------------------------
+All MiST related files including the Quartus project files are in the 'mist' subdirectory.
+
+Original readme below :)
+
+
+
+
 Port of the A2601 FPGA implementation for the Turbo Chameleon
 ---------------------------------------------------------------------------------
 
