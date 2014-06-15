@@ -325,7 +325,7 @@ begin
     end process;
 	 pb(7) <= sw_toggle(0);
 	 pb(6) <= sw_toggle(1);
-	 pb(3) <= '0'; --not used
+	 pb(3) <= '1'; --  B/W, color
     pb(5) <= '1'; --nc ?
     pb(4) <= '1'; --nc
     pb(2) <= '1'; --nc
