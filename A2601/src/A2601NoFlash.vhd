@@ -36,9 +36,9 @@ entity A2601NoFlash is
 			audio: out std_logic;
          O_VSYNC: out std_logic;
          O_HSYNC: out std_logic;
-			O_VIDEO_R: out std_logic_vector(3 downto 0);
-			O_VIDEO_G: out std_logic_vector(3 downto 0);
-			O_VIDEO_B: out std_logic_vector(3 downto 0);			
+			O_VIDEO_R: out std_logic_vector(5 downto 0);
+			O_VIDEO_G: out std_logic_vector(5 downto 0);
+			O_VIDEO_B: out std_logic_vector(5 downto 0);			
 --         au: out std_logic_vector(4 downto 0);
          res: in std_logic;
          p_l: in std_logic;
@@ -91,23 +91,6 @@ architecture arch of A2601NoFlash is
          ph0_out: out std_logic;
          ph1_out: out std_logic);
     end component;
-
-	COMPONENT VGA_SCANDBL
-	PORT(
-		I_R : IN std_logic_vector(2 downto 0);
-		I_G : IN std_logic_vector(2 downto 0);
-		I_B : IN std_logic_vector(1 downto 0);
-		I_HSYNC : IN std_logic;
-		I_VSYNC : IN std_logic;
-		CLK : IN std_logic;
-		CLK_X2 : IN std_logic;          
-		O_R : OUT std_logic_vector(2 downto 0);
-		O_G : OUT std_logic_vector(2 downto 0);
-		O_B : OUT std_logic_vector(1 downto 0);
-		O_HSYNC : OUT std_logic;
-		O_VSYNC : OUT std_logic
-		);
-	END COMPONENT;	
 	
 	 component dac is
 	 port(DACout: 	out std_logic;
@@ -238,9 +221,9 @@ begin
 		port map(audio, au, vid_clk, '0');	
 
 	
-      O_VIDEO_R(3 downto 1) <= rgbx2(23 downto 21);
-      O_VIDEO_G(3 downto 1) <= rgbx2(15 downto 13);
-      O_VIDEO_B(3 downto 2) <= rgbx2(7 downto 6);	
+      O_VIDEO_R <= rgbx2(23 downto 18);
+      O_VIDEO_G <= rgbx2(15 downto 10);
+      O_VIDEO_B <= rgbx2(7 downto 2);	
       O_HSYNC   <= hsyn;
       O_VSYNC   <= vsyn;	
 
@@ -325,7 +308,7 @@ begin
     end process;
 	 pb(7) <= sw_toggle(0);
 	 pb(6) <= sw_toggle(1);
-	 pb(3) <= '1'; --  B/W, color
+	 pb(3) <= '1'; --not used
     pb(5) <= '1'; --nc ?
     pb(4) <= '1'; --nc
     pb(2) <= '1'; --nc

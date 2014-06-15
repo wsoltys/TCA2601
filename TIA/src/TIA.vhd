@@ -595,16 +595,12 @@ architecture arch of TIA is
 
 	COMPONENT VGA_SCANDBL
 	PORT(
-		I_R : IN std_logic_vector(2 downto 0);
-		I_G : IN std_logic_vector(2 downto 0);
-		I_B : IN std_logic_vector(1 downto 0);
+		I : IN std_logic_vector(6 downto 0);
 		I_HSYNC : IN std_logic;
 		I_VSYNC : IN std_logic;
 		CLK : IN std_logic;
 		CLK_X2 : IN std_logic;          
-		O_R : OUT std_logic_vector(2 downto 0);
-		O_G : OUT std_logic_vector(2 downto 0);
-		O_B : OUT std_logic_vector(1 downto 0);
+		O : OUT std_logic_vector(6 downto 0);
 		O_HSYNC : OUT std_logic;
 		O_VSYNC : OUT std_logic
 		);
@@ -813,8 +809,7 @@ architecture arch of TIA is
 
     signal vid_clk_dvdr: unsigned(3 downto 0) := "0000";
 	 
-	 signal rgb: std_logic_vector(23 downto 0);
-	 signal vga_lum: std_logic_vector(3 downto 0);
+	 signal vga_colu: std_logic_vector(6 downto 0);
 
 
 begin
@@ -1114,6 +1109,7 @@ begin
                 elsif (pf_pix = '1' or bl_pix = '1') then
                     int_colu <= pf_colu;
                 else
+--                    int_colu <= "0110010";
                     int_colu <= bk_colu;
                 end if;
             else
@@ -1124,6 +1120,7 @@ begin
                 elsif (p1_pix = '1' or m1_pix = '1') then
                     int_colu <= p1_colu;
                 else
+--                    int_colu <= "0110010";
                     int_colu <= bk_colu;
                 end if;
             end if;
@@ -1319,14 +1316,10 @@ begin
     clkx2 <= vid_clk_dvdr(2);
 	 
 	Inst_VGA_SCANDBL: VGA_SCANDBL PORT MAP(
-		I_R => rgb(23 downto 21),
-		I_G => rgb(15 downto 13),
-		I_B => rgb(7 downto 6),
+		I => int_colu,
 		I_HSYNC => hsync,
 		I_VSYNC => vsync,
-		O_R => rgbx2(23 downto 21),
-		O_G => rgbx2(15 downto 13),
-		O_B => rgbx2(7 downto 6),
+		O => vga_colu,
 		O_HSYNC => hsyn,
 		O_VSYNC => vsyn,
 		CLK => clk,
@@ -1334,15 +1327,13 @@ begin
 	);	
 	
 	Inst_VGAColorTable: VGAColorTable PORT MAP(
-		clk => clk,
-		lum => vga_lum,
-		hue => int_colu(6 downto 3),
+		clk => clkx2,
+		lum => '0' & vga_colu(2 downto 0),
+		hue => vga_colu(6 downto 3),
 		mode => "00",	--NTSC
-		outColor => rgb
+		outColor => rgbx2
 	);	
 		
-	vga_lum <= '0' & int_colu(2 downto 0);
-
 --      O_VIDEO_R(3 downto 1) <= video_r_x2;
 --      O_VIDEO_G(3 downto 1) <= video_g_x2;
 --      O_VIDEO_B(3 downto 2) <= video_b_x2;	

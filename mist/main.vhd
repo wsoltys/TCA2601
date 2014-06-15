@@ -83,9 +83,9 @@ architecture rtl of main is
 	signal audio: std_logic := '0';
    signal O_VSYNC: std_logic := '0';
    signal O_HSYNC: std_logic := '0';
-	signal O_VIDEO_R: std_logic_vector(3 downto 0) := (others => '0');
-	signal O_VIDEO_G: std_logic_vector(3 downto 0) := (others => '0');
-	signal O_VIDEO_B: std_logic_vector(3 downto 0) := (others => '0');			
+	signal O_VIDEO_R: std_logic_vector(5 downto 0) := (others => '0');
+	signal O_VIDEO_G: std_logic_vector(5 downto 0) := (others => '0');
+	signal O_VIDEO_B: std_logic_vector(5 downto 0) := (others => '0');			
 	signal res: std_logic := '0';
 	signal p_l: std_logic := '0';
 	signal p_r: std_logic := '0';
@@ -190,9 +190,9 @@ SDRAM_nCAS <= '1'; -- disable ram
 			AUDIO_R <= sigmaR_reg;
 		else
 			-- A2601
-			VGA_R <= O_VIDEO_R & "00";
-			VGA_G <= O_VIDEO_G & "00";
-			VGA_B <= O_VIDEO_B & "00";
+			VGA_R <= O_VIDEO_R;
+			VGA_G <= O_VIDEO_G;
+			VGA_B <= O_VIDEO_B;
 			VGA_HS <= not O_HSYNC;
 			VGA_VS <= not O_VSYNC;
 			AUDIO_L <= audio;

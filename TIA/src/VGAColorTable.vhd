@@ -37,7 +37,7 @@ begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
-			case "0000000" & mode & hue & lum(3 downto 1) is
+			case "0000000" & mode & hue & lum(2 downto 0) is
 				-- NTSC Colors
 				when X"0000" => outColor <= x"000000";
 				when X"0001" => outColor <= x"404040";

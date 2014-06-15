@@ -56,15 +56,11 @@ library ieee;
 
 entity VGA_SCANDBL is
 	port (
-		I_R              : in  std_logic_vector( 2 downto 0);
-		I_G              : in  std_logic_vector( 2 downto 0);
-		I_B              : in  std_logic_vector( 1 downto 0);
+		I                : in  std_logic_vector( 6 downto 0);
 		I_HSYNC          : in  std_logic;
 		I_VSYNC          : in  std_logic;
 		--
-		O_R              : out std_logic_vector( 2 downto 0);
-		O_G              : out std_logic_vector( 2 downto 0);
-		O_B              : out std_logic_vector( 1 downto 0);
+		O                : out std_logic_vector( 6 downto 0);
 		O_HSYNC          : out std_logic;
 		O_VSYNC          : out std_logic;
 		--
@@ -82,7 +78,7 @@ architecture RTL of VGA_SCANDBL is
 	signal ivs_t1      : std_logic := '0';
 	signal hpos_i      : std_logic_vector(8 downto 0) := (others => '0');
 	signal bank_i      : std_logic := '0';
-	signal rgb_in      : std_logic_vector(7 downto 0) := (others => '0');
+	signal data_in     : std_logic_vector(6 downto 0) := (others => '0');
 	signal hsize_i     : std_logic_vector(8 downto 0) := (others => '0');
 	--
 	-- output timing
@@ -91,24 +87,23 @@ architecture RTL of VGA_SCANDBL is
 	signal ovs_t1      : std_logic := '0';
 	signal hpos_o      : std_logic_vector(8 downto 0) := (others => '0');
 	signal bank_o      : std_logic := '0';
-	signal rgb_out     : std_logic_vector(7 downto 0) := (others => '0');
+	signal data_out    : std_logic_vector(6 downto 0) := (others => '0');
 	signal vs_cnt      : std_logic_vector(2 downto 0) := (others => '0');
 begin
-	rgb_in <= I_B & I_G & I_R;
-
+	data_in <= I;
 
 u_ram : entity work.vga_framebuffer
 	port map (
 		rdaddress(9)	=> bank_o,
 		rdaddress(8 downto 0)	=> hpos_o,
 		rdclock		=> CLK_X2,
-		q				=> rgb_out,
+		q				=> data_out,
 
 		wraddress(9)	=> bank_i,
 		wraddress(8 downto 0)	=> hpos_i,
 		wrclock		=> CLK,
 		wren			=> '1',
-		data			=> rgb_in
+		data			=> data_in
 	);
 
 CLK_DUP <= CLK;
@@ -175,10 +170,7 @@ begin
 			O_HSYNC <= '0';
 		end if;
 
-		O_B <= rgb_out(7 downto 6);
-		O_G <= rgb_out(5 downto 3);
-		O_R <= rgb_out(2 downto 0);
-
+		O <= data_out;
 	end if;
 end process;
 
