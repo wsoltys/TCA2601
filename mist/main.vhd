@@ -40,51 +40,21 @@ end entity;
 -- -----------------------------------------------------------------------
 
 architecture rtl of main is
-	type state_t is (TEST_IDLE, TEST_FILL, TEST_FILL_W, TEST_CHECK, TEST_CHECK_W, TEST_ERROR);
 	
 -- System clocks
 	signal vid_clk: std_logic := '0';
 	signal sysclk : std_logic := '0';
   signal osd_clk : std_logic := '0';
-	signal ena_1mhz : std_logic := '0';
-	signal ena_1khz : std_logic := '0';
 
 	signal reset_button_n : std_logic := '0';
 	
 -- Global signals
 	signal reset : std_logic := '0';
-	signal end_of_pixel : std_logic := '0';
-
--- RAM Test
-	signal state : state_t := TEST_IDLE;
-	signal noise_bits : unsigned(7 downto 0) := (others => '0');
-	
--- MUX
-	signal debug_reg : unsigned(7 downto 0) := (others => '1');
-
-
--- LEDs
-	signal led_green : std_logic := '0';
-	signal led_red : std_logic := '0';
-
--- VGA
-	signal hsync : std_logic := '0';
-	signal vsync : std_logic := '0';
-	
-	signal red_reg : std_logic_vector(5 downto 0) := (others => '0');
-	signal grn_reg : std_logic_vector(5 downto 0) := (others => '0');
-	signal blu_reg : std_logic_vector(5 downto 0) := (others => '0');
-	
--- Sound
-	signal sigma_l : std_logic := '0';
-	signal sigma_r : std_logic := '0';
-	signal sigmaL_reg : std_logic := '0';
-	signal sigmaR_reg : std_logic := '0';
 	
 -- A2601
 	signal audio: std_logic := '0';
-   signal O_VSYNC: std_logic := '0';
-   signal O_HSYNC: std_logic := '0';
+  signal O_VSYNC: std_logic := '0';
+  signal O_HSYNC: std_logic := '0';
 	signal O_VIDEO_R: std_logic_vector(5 downto 0) := (others => '0');
 	signal O_VIDEO_G: std_logic_vector(5 downto 0) := (others => '0');
 	signal O_VIDEO_B: std_logic_vector(5 downto 0) := (others => '0');			
@@ -149,43 +119,32 @@ SDRAM_nCAS <= '1'; -- disable ram
 -- -----------------------------------------------------------------------
 	a2601Instance : entity work.A2601NoFlash
 		port map (
-			vid_clk => vid_clk,
-			audio => audio,
-         O_VSYNC => O_VSYNC,
-         O_HSYNC => O_HSYNC,
-			O_VIDEO_R => O_VIDEO_R,
-			O_VIDEO_G => O_VIDEO_G,
-			O_VIDEO_B => O_VIDEO_B,
-         res => res,
-         p_l => p_l,
-         p_r => p_r,
-         p_a => p_a,
-         p_u => p_u,
-         p_d => p_d,
-         p2_l => p2_l,
-         p2_r => p2_r,
-         p2_a => p2_a,
-         p2_u => p2_u,
-         p2_d => p2_d,
-         p_start => p_start,
-         p_select => p_select,
-			next_cartridge => '0', --next_cartridge,
-         p_bs => open,
-			LED => open,
-			I_SW => "111",
-         JOYSTICK_GND => open,
-			JOYSTICK2_GND => open
-		);
-
-	myComputerInstance : entity work.MyComputer
-		port map (
-			clk_50mhz => vid_clk,
-			VGA_BLUE => blu_reg(5),
-			VGA_GREEN => grn_reg(5),
-			VGA_HSYNC => hsync,
-			VGA_RED => red_reg(5),
-			VGA_VSYNC => vsync,
-			debug => debug_reg
+          vid_clk => vid_clk,
+          audio => audio,
+          O_VSYNC => O_VSYNC,
+          O_HSYNC => O_HSYNC,
+          O_VIDEO_R => O_VIDEO_R,
+          O_VIDEO_G => O_VIDEO_G,
+          O_VIDEO_B => O_VIDEO_B,
+          res => res,
+          p_l => p_l,
+          p_r => p_r,
+          p_a => p_a,
+          p_u => p_u,
+          p_d => p_d,
+          p2_l => p2_l,
+          p2_r => p2_r,
+          p2_a => p2_a,
+          p2_u => p2_u,
+          p2_d => p2_d,
+          p_start => p_start,
+          p_select => p_select,
+          next_cartridge => '0', --next_cartridge,
+          p_bs => open,
+          LED => open,
+          I_SW => "111",
+          JOYSTICK_GND => open,
+          JOYSTICK2_GND => open
 		);
 
   -- A2601 -> OSD
@@ -269,13 +228,13 @@ SDRAM_nCAS <= '1'; -- disable ram
 -- -----------------------------------------------------------------------
 -- Clocks and PLL
 -- -----------------------------------------------------------------------
-	pllInstance : entity work.pll27
-		port map (
-			inclk0 => CLOCK_27(0),
-			c0 => sysclk,
-			c4 => vid_clk,
-			locked => open
-		);
+  pllInstance : entity work.pll27
+    port map (
+      inclk0 => CLOCK_27(0),
+      c0 => sysclk,
+      c4 => vid_clk,
+      locked => open
+    );
     
   pllosd : entity work.clk_div
     generic map (
@@ -286,42 +245,6 @@ SDRAM_nCAS <= '1'; -- disable ram
       reset => '0',
       clk_out => osd_clk
     );
-
--- -----------------------------------------------------------------------
--- 1 Mhz and 1 Khz clocks
--- -----------------------------------------------------------------------
-	my1Mhz : entity work.chameleon_1mhz
-		generic map (
-			clk_ticks_per_usec => 100
-		)
-		port map (
-			clk => sysclk,
-			ena_1mhz => ena_1mhz,
-			ena_1mhz_2 => open
-		);
-
-	my1Khz : entity work.chameleon_1khz
-		port map (
-			clk => sysclk,
-			ena_1mhz => ena_1mhz,
-			ena_1khz => ena_1khz
-		);
-
-
--- -----------------------------------------------------------------------
--- Sound test
--- -----------------------------------------------------------------------
-	process(sysclk)
-	begin
-		if rising_edge(sysclk) then
-			if ena_1khz = '1' then
-				sigma_l <= not sigma_l;
-				sigma_r <= not sigma_r;
-			end if;
-		end if;
-	end process;
-	sigmaL_reg <= sigma_l;
-	sigmaR_reg <= sigma_r;
 
 -- ------------------------------------------------------------------------
 -- User IO
