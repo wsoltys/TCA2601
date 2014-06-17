@@ -14,6 +14,7 @@ architecture test of main_testbench is
 	signal SPI_SCK : std_logic := '0';
 	signal SPI_DI : std_logic := '0';
 	signal SPI_DO : std_logic := '0';
+  signal SPI_SS3 : std_logic := '0';
 	signal CONF_DATA0 : std_logic := '0';
 	signal red : std_logic_vector(5 downto 0) := (others => '0');
 	signal grn : std_logic_vector(5 downto 0) := (others => '0');
@@ -31,6 +32,7 @@ begin
 			SPI_SCK => SPI_SCK,
 			SPI_DI => SPI_DI,
 			SPI_DO => SPI_DO,
+      SPI_SS3 => SPI_SS3,
 			CONF_DATA0 => CONF_DATA0,
 			VGA_R => red,
 			VGA_G => grn,

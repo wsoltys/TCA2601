@@ -15,6 +15,7 @@ entity main is
 		SPI_SCK : in std_logic;
 		SPI_DI : in std_logic;
 		SPI_DO : out std_logic;
+    SPI_SS3 : in std_logic;
 		CONF_DATA0 : in std_logic;
 		
 -- LED
@@ -44,6 +45,7 @@ architecture rtl of main is
 -- System clocks
 	signal vid_clk: std_logic := '0';
 	signal sysclk : std_logic := '0';
+  signal osd_clk : std_logic := '0';
 	signal ena_1mhz : std_logic := '0';
 	signal ena_1khz : std_logic := '0';
 
@@ -122,6 +124,15 @@ component user_io
           JOY1 : out std_logic_vector(5 downto 0)
        );
   end component user_io;
+  
+component osd
+  port (
+          pclk, sck, ss, sdi, hs_in, vs_in : in std_logic;
+          red_in, blue_in, green_in : in std_logic_vector(5 downto 0);
+          red_out, blue_out, green_out : out std_logic_vector(5 downto 0);
+          hs_out, vs_out : out std_logic
+       );
+end component osd;
 
 begin
 
@@ -177,28 +188,27 @@ SDRAM_nCAS <= '1'; -- disable ram
 			debug => debug_reg
 		);
 
-	process(red_reg, grn_reg, blu_reg, O_VIDEO_R, O_VIDEO_G, O_VIDEO_B, O_HSYNC, O_VSYNC, audio)
-	begin
-		if false then
-			-- VGA test
-			VGA_R <= red_reg;
-			VGA_G <= grn_reg;
-			VGA_B <= blu_reg;
-			VGA_HS <= not hsync;
-			VGA_VS <= not vsync;
-			AUDIO_L <= sigmaL_reg;
-			AUDIO_R <= sigmaR_reg;
-		else
-			-- A2601
-			VGA_R <= O_VIDEO_R;
-			VGA_G <= O_VIDEO_G;
-			VGA_B <= O_VIDEO_B;
-			VGA_HS <= not O_HSYNC;
-			VGA_VS <= not O_VSYNC;
-			AUDIO_L <= audio;
-			AUDIO_R <= audio;
-		end if;
-	end process;
+  -- A2601 -> OSD
+  osd_inst : osd
+      port map (
+          pclk => osd_clk,
+          sdi => SPI_DI,
+          sck => SPI_SCK,
+          ss => SPI_SS3,
+          red_in => O_VIDEO_R,
+          green_in => O_VIDEO_G,
+          blue_in => O_VIDEO_B,
+          hs_in => not O_HSYNC,
+          vs_in => not O_VSYNC,
+          red_out => VGA_R,
+          green_out => VGA_G,
+          blue_out => VGA_B,
+          hs_out => VGA_HS,
+          vs_out => VGA_VS
+      );
+      
+  AUDIO_L <= audio;
+  AUDIO_R <= audio;
 			
 	res <= '0';
 
@@ -266,6 +276,16 @@ SDRAM_nCAS <= '1'; -- disable ram
 			c4 => vid_clk,
 			locked => open
 		);
+    
+  pllosd : entity work.clk_div
+    generic map (
+      scale_factor => 2
+    )
+    port map (
+      clk_in => vid_clk,
+      reset => '0',
+      clk_out => osd_clk
+    );
 
 -- -----------------------------------------------------------------------
 -- 1 Mhz and 1 Khz clocks

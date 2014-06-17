@@ -287,6 +287,8 @@ set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_RO
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name EDA_TEST_BENCH_FILE ../mist/main_testbench.vhd -section_id main_testbench
 set_global_assignment -name EDA_TEST_BENCH_FILE ../YaGraphCon/MyComputer_testbench.vhd -section_id MyComputer_testbench
+set_global_assignment -name VERILOG_FILE osd.v
+set_global_assignment -name VHDL_FILE clk_div.vhd
 set_global_assignment -name VERILOG_FILE user_io.v
 set_global_assignment -name VHDL_FILE ../YaGraphCon/MyComputer_testbench.vhd
 set_global_assignment -name VHDL_FILE ../YaGraphCon/OutputGenerator.vhd
