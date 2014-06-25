@@ -192,6 +192,8 @@ architecture arch of A2601NoFlash is
 
     signal bss: bss_type := BANK00; 	--bank switching method
     signal sc: std_logic := '0';		--superchip enabled or not
+    
+    signal cart_size: integer range 0 to 16384 := 0; -- cart size in bytes
 
 	signal romSelectCounter : integer range 0 to 3 := 3;
 	signal romSelectBits : std_logic_vector(1 downto 0) := "00";
@@ -208,14 +210,11 @@ begin
 	Inst_cart_rom: entity work.cart_rom PORT MAP(
 		clock => vid_clk,
 		q => d,
-		address => romAddress,
+		address => a,
 		wren => '0',
 		data => (others => '0')
 	);		 
-	romAddress <= "00" & a(11 downto 0);
 	
-	--brd_CartTable: CartTable
-   --     port map(ph0, cart_info, cart_max, std_logic_vector(cart_cntr));
 	
 	dac_inst: dac 
 		port map(audio, au, vid_clk, '0');	
@@ -437,6 +436,19 @@ begin
                 end case;
             end if;
         end if;
+    end process;
+    
+    process(cart_size)
+    begin
+      if(cart_size <= 4096) then
+        bss <= BANK00;
+      elsif(cart_size <= 8192) then
+        bss <= BANKF8;
+      elsif(cart_size <= 16384) then
+        bss <= BANKF6;
+      else
+        bss <= BANK00;
+      end if;
     end process;
 
     --bss <= cart_info(3 downto 1);
