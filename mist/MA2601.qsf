@@ -273,6 +273,9 @@ set_global_assignment -name RESERVE_FLASH_NCE_AFTER_CONFIGURATION "USE AS REGULA
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
+set_global_assignment -name VERILOG_FILE data_io_ram.v
+set_global_assignment -name VERILOG_FILE data_io.v
 set_global_assignment -name VERILOG_FILE osd.v
 set_global_assignment -name VHDL_FILE clk_div.vhd
 set_global_assignment -name VERILOG_FILE user_io.v
@@ -296,5 +299,4 @@ set_global_assignment -name QIP_FILE ../A2601/src/cart_rom.qip
 set_global_assignment -name VHDL_FILE ../TIA/src/VGAColorTable.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/DeltaSigma.vhd
 set_global_assignment -name QIP_FILE pll27.qip
-set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

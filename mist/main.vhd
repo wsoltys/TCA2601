@@ -15,6 +15,7 @@ entity main is
 		SPI_SCK : in std_logic;
 		SPI_DI : in std_logic;
 		SPI_DO : out std_logic;
+    SPI_SS2 : in std_logic;
     SPI_SS3 : in std_logic;
 		CONF_DATA0 : in std_logic;
 		
@@ -83,15 +84,16 @@ architecture rtl of main is
 	signal buttons  : std_logic_vector(1 downto 0);
   signal joy0     : std_logic_vector(5 downto 0);
   signal joy1     : std_logic_vector(5 downto 0);
+  signal status   : std_logic_vector(7 downto 0);
 
 component user_io
 	port (  SPI_CLK, SPI_SS_IO, SPI_MOSI :in std_logic;
           SPI_MISO : out std_logic;
           SWITCHES : out std_logic_vector(1 downto 0);
           BUTTONS : out std_logic_vector(1 downto 0);
-          CORE_TYPE : in std_logic_vector(7 downto 0);
           JOY0 : out std_logic_vector(5 downto 0);
-          JOY1 : out std_logic_vector(5 downto 0)
+          JOY1 : out std_logic_vector(5 downto 0);
+          status : out std_logic_vector(7 downto 0)
        );
   end component user_io;
   
@@ -144,7 +146,10 @@ SDRAM_nCAS <= '1'; -- disable ram
           LED => open,
           I_SW => "111",
           JOYSTICK_GND => open,
-          JOYSTICK2_GND => open
+          JOYSTICK2_GND => open,
+          sdi => SPI_DI,
+          sck => SPI_SCK,
+          ss2 => SPI_SS2
 		);
 
   -- A2601 -> OSD
@@ -169,7 +174,7 @@ SDRAM_nCAS <= '1'; -- disable ram
   AUDIO_L <= audio;
   AUDIO_R <= audio;
 			
-	res <= '0';
+	res <= status(0);
 
 	-- 9 pin d-sub joystick pinout:
 	-- pin 1: up
@@ -261,7 +266,7 @@ user_io_inst : user_io
 		BUTTONS  => buttons,
     JOY0 => joy0,
     JOY1 => joy1,
-		CORE_TYPE => X"a4"
+    status => status
 	);
 
 end architecture;

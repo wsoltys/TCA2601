@@ -33,13 +33,12 @@ use ieee.numeric_std.all;
 
 entity A2601NoFlash is
    port (vid_clk: in std_logic;
-			audio: out std_logic;
+         audio: out std_logic;
          O_VSYNC: out std_logic;
          O_HSYNC: out std_logic;
-			O_VIDEO_R: out std_logic_vector(5 downto 0);
-			O_VIDEO_G: out std_logic_vector(5 downto 0);
-			O_VIDEO_B: out std_logic_vector(5 downto 0);			
---         au: out std_logic_vector(4 downto 0);
+         O_VIDEO_R: out std_logic_vector(5 downto 0);
+         O_VIDEO_G: out std_logic_vector(5 downto 0);
+         O_VIDEO_B: out std_logic_vector(5 downto 0);			
          res: in std_logic;
          p_l: in std_logic;
          p_r: in std_logic;
@@ -51,18 +50,21 @@ entity A2601NoFlash is
          p2_a: in std_logic;
          p2_u: in std_logic;
          p2_d: in std_logic;
-			
+        
          p_start: in std_logic;
          p_select: in std_logic;
          next_cartridge: in std_logic;
          p_bs: out std_logic;			
-			LED: out std_logic_vector(2 downto 0);
-			
-			I_SW :in std_logic_vector(2 downto 0);
-			
-			
-         JOYSTICK_GND: out std_logic			;
-			JOYSTICK2_GND: out std_logic	
+         LED: out std_logic_vector(2 downto 0);
+        
+         I_SW :in std_logic_vector(2 downto 0);
+  
+         JOYSTICK_GND: out std_logic;
+         JOYSTICK2_GND: out std_logic;
+         sdi: in std_logic;
+         sck: in std_logic;
+         ss2: in std_logic
+      
 			);
 end A2601NoFlash;
 
@@ -114,9 +116,26 @@ architecture arch of A2601NoFlash is
              a: in std_logic_vector(6 downto 0));
     end component;
     
+    component data_io is
+        port(sck: in std_logic;
+             ss: in std_logic;
+             sdi: in std_logic;
+             downloading: out std_logic;
+             size: out std_logic_vector(15 downto 0);
+             clk: in std_logic;
+             we: in std_logic;
+             a: in std_logic_vector(13 downto 0);
+             din: in std_logic_vector(7 downto 0);
+             dout: out std_logic_vector(7 downto 0));
+    end component;
+    
     signal d: std_logic_vector(7 downto 0);
+    signal d_cart: std_logic_vector(7 downto 0);
+    signal d_ram: std_logic_vector(7 downto 0);
     --signal cpu_d: std_logic_vector(7 downto 0);
     signal a: std_logic_vector(13 downto 0);
+    signal a_cart: std_logic_vector(13 downto 0);
+    signal a_ram: std_logic_vector(13 downto 0);
     signal pa: std_logic_vector(7 downto 0);
     signal pb: std_logic_vector(7 downto 0);
     signal inpt4: std_logic;
@@ -192,8 +211,6 @@ architecture arch of A2601NoFlash is
 
     signal bss: bss_type := BANK00; 	--bank switching method
     signal sc: std_logic := '0';		--superchip enabled or not
-    
-    signal cart_size: integer range 0 to 16384 := 0; -- cart size in bytes
 
 	signal romSelectCounter : integer range 0 to 3 := 3;
 	signal romSelectBits : std_logic_vector(1 downto 0) := "00";
@@ -201,6 +218,9 @@ architecture arch of A2601NoFlash is
 	signal forceReset : std_logic;
 	signal last_next_cartridge : std_logic;
 	signal romAddress : std_logic_vector(13 downto 0);
+  
+  signal downl : std_logic := '0';
+  signal size : std_logic_vector(15 downto 0) := (others=>'0');
 	 
 begin
 	  
@@ -209,8 +229,8 @@ begin
   
 	Inst_cart_rom: entity work.cart_rom PORT MAP(
 		clock => vid_clk,
-		q => d,
-		address => a,
+		q => d_cart,
+		address => a_cart,
 		wren => '0',
 		data => (others => '0')
 	);		 
@@ -438,18 +458,28 @@ begin
         end if;
     end process;
     
-    process(cart_size)
+    process(size, downl)
     begin
-      if(cart_size <= 4096) then
+      if(size = "0000000000000000") then
+        a_cart <= a;
+        d <= d_cart;
+      else
+        a_ram <= a;
+        d <= d_ram;
+      end if;
+      if(size <= "0001000000000000") then
         bss <= BANK00;
-      elsif(cart_size <= 8192) then
+      elsif(size <= "0010000000000000") then
         bss <= BANKF8;
-      elsif(cart_size <= 16384) then
+      elsif(size <= "0100000000000000") then
         bss <= BANKF6;
       else
         bss <= BANK00;
       end if;
     end process;
+    
+    data_io_inst: data_io
+        port map(sck, ss2, sdi, downl, size, vid_clk, '0', a_ram, (others=>'0'), d_ram);
 
     --bss <= cart_info(3 downto 1);
     --sc <= cart_info(0);
