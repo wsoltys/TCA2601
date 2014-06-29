@@ -295,7 +295,6 @@ set_global_assignment -name VHDL_FILE ../A2601/src/A2601NoFlash.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/A2601Core.vhd
 set_global_assignment -name VHDL_FILE ../mist/main.vhd
 set_global_assignment -name QIP_FILE ../A2601/src/vga_framebuffer.qip
-set_global_assignment -name QIP_FILE ../A2601/src/cart_rom.qip
 set_global_assignment -name VHDL_FILE ../TIA/src/VGAColorTable.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/DeltaSigma.vhd
 set_global_assignment -name QIP_FILE pll27.qip

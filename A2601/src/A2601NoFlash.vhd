@@ -130,11 +130,9 @@ architecture arch of A2601NoFlash is
     end component;
     
     signal d: std_logic_vector(7 downto 0);
-    signal d_cart: std_logic_vector(7 downto 0);
     signal d_ram: std_logic_vector(7 downto 0);
     --signal cpu_d: std_logic_vector(7 downto 0);
     signal a: std_logic_vector(13 downto 0);
-    signal a_cart: std_logic_vector(13 downto 0);
     signal a_ram: std_logic_vector(13 downto 0);
     signal pa: std_logic_vector(7 downto 0);
     signal pb: std_logic_vector(7 downto 0);
@@ -215,7 +213,7 @@ architecture arch of A2601NoFlash is
 	signal romSelectCounter : integer range 0 to 3 := 3;
 	signal romSelectBits : std_logic_vector(1 downto 0) := "00";
 	signal resetCounter : integer range 0 to 60000000 := 60000000;
-	signal forceReset : std_logic;
+	signal forceReset : std_logic := '0';
 	signal last_next_cartridge : std_logic;
 	signal romAddress : std_logic_vector(13 downto 0);
   
@@ -226,56 +224,22 @@ begin
 	  
 	ms_A2601: A2601
         port map(vid_clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, inpt4, inpt5, open, open, vsyn, hsyn, rgbx2, cv, au0, au1, av0, av1, ph0, ph1);
-  
-	Inst_cart_rom: entity work.cart_rom PORT MAP(
-		clock => vid_clk,
-		q => d_cart,
-		address => a_cart,
-		wren => '0',
-		data => (others => '0')
-	);		 
-	
 	
 	dac_inst: dac 
 		port map(audio, au, vid_clk, '0');	
 
 	
-      O_VIDEO_R <= rgbx2(23 downto 18);
-      O_VIDEO_G <= rgbx2(15 downto 10);
-      O_VIDEO_B <= rgbx2(7 downto 2);	
-      O_HSYNC   <= hsyn;
-      O_VSYNC   <= vsyn;	
-
-	process(vid_clk)
-	begin
-		if rising_edge(vid_clk) then
-			if resetCounter = 0 and next_cartridge = '0' and last_next_cartridge = '1' then
-				if romSelectCounter = 0 then
-					romSelectCounter <= 3;
-				else
-					romSelectCounter <= romSelectCounter - 1;
-				end if;
-				resetCounter <= 1000000;
-			end if;
-			case romSelectCounter is
-				when 0 => romSelectBits <= "00";
-				when 1 => romSelectBits <= "01";
-				when 2 => romSelectBits <= "10";
-				when 3 => romSelectBits <= "11";
-				when others => romSelectBits <= "00";
-			end case;
-			last_next_cartridge <= next_cartridge;
-		if resetCounter > 0 then
-			resetCounter <= resetCounter - 1;
-		end if;
-		end if;
-	end process;
+  O_VIDEO_R <= rgbx2(23 downto 18);
+  O_VIDEO_G <= rgbx2(15 downto 10);
+  O_VIDEO_B <= rgbx2(7 downto 2);	
+  O_HSYNC   <= hsyn;
+  O_VSYNC   <= vsyn;
 
 --    cpu_d <= d when a(12) = '1' else "ZZZZZZZZ";
  process(ph0)
     begin
         if (ph0'event and ph0 = '1') then
-			if res = '1' or resetCounter > 0 then
+			if res = '1' or forceReset = '1' then
 			rst <= '1';
 			else
 			rst <= '0';
@@ -460,12 +424,14 @@ begin
     
     process(size, downl)
     begin
-      if(size = "0000000000000000") then
-        a_cart <= a;
-        d <= d_cart;
-      else
+      if(downl = '0') then
         a_ram <= a;
         d <= d_ram;
+        forceReset <= '0';
+      else
+        a_ram <= a;
+        d <= x"FF";
+        forceReset <= '1';
       end if;
       if(size <= "0001000000000000") then
         bss <= BANK00;
