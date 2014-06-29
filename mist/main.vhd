@@ -70,8 +70,9 @@ architecture rtl of main is
 	signal p2_a: std_logic := '0';
 	signal p2_u: std_logic := '0';
 	signal p2_d: std_logic := '0';
-	signal p_start: std_logic := '0';
-	signal p_select: std_logic := '0';
+	signal p_start: std_logic := '1';
+	signal p_select: std_logic := '1';
+  signal p_color: std_logic := '1';
 	signal next_cartridge: std_logic := '0';
 --	signal p_bs: std_logic;
 --	signal LED: std_logic_vector(2 downto 0);
@@ -85,6 +86,11 @@ architecture rtl of main is
   signal joy0     : std_logic_vector(5 downto 0);
   signal joy1     : std_logic_vector(5 downto 0);
   signal status   : std_logic_vector(7 downto 0);
+  signal ascii_new: std_logic;
+  signal ascii_code : STD_LOGIC_VECTOR(6 DOWNTO 0);
+  signal clk12k : std_logic;
+  signal ps2Clk	: std_logic;
+  signal ps2Data	: std_logic;
 
 component user_io
 	port (  SPI_CLK, SPI_SS_IO, SPI_MOSI :in std_logic;
@@ -93,7 +99,10 @@ component user_io
           BUTTONS : out std_logic_vector(1 downto 0);
           JOY0 : out std_logic_vector(5 downto 0);
           JOY1 : out std_logic_vector(5 downto 0);
-          status : out std_logic_vector(7 downto 0)
+          status : out std_logic_vector(7 downto 0);
+          clk : in std_logic;
+          ps2_clk : out std_logic;
+          ps2_data : out std_logic
        );
   end component user_io;
   
@@ -141,6 +150,7 @@ SDRAM_nCAS <= '1'; -- disable ram
           p2_d => p2_d,
           p_start => p_start,
           p_select => p_select,
+          p_color => p_color,
           next_cartridge => '0', --next_cartridge,
           p_bs => open,
           LED => open,
@@ -219,8 +229,8 @@ SDRAM_nCAS <= '1'; -- disable ram
 	p2_a <= not joy1(4);
 	p2_u <= not joy1(3);
 	p2_d <= not joy1(2);
-	p_start <= not buttons(1);
-	p_select <= not buttons(0);
+  p_start <= not buttons(1);
+	--p_select <= not buttons(0);
 	--next_cartridge <= reset_button_n;
 --	p_s <= freeze_n;
 	-- p_bs <= '1';
@@ -236,8 +246,8 @@ SDRAM_nCAS <= '1'; -- disable ram
   pllInstance : entity work.pll27
     port map (
       inclk0 => CLOCK_27(0),
-      c0 => sysclk,
-      c4 => vid_clk,
+      c0 => vid_clk,
+      c1 => clk12k,
       locked => open
     );
     
@@ -266,7 +276,29 @@ user_io_inst : user_io
 		BUTTONS  => buttons,
     JOY0 => joy0,
     JOY1 => joy1,
-    status => status
+    status => status,
+    clk => clk12k,
+    ps2_clk => ps2Clk,
+    ps2_data => ps2Data
 	);
+ 
+  keyboard : entity work.ps2_keyboard_to_ascii
+    port map (vid_clk, ps2Clk, ps2data, ascii_new, ascii_code);
+    
+  process (ascii_new)
+  begin
+    -- 1
+    if(ascii_code = "0110001" and ascii_new = '1') then
+      p_select <= '0';
+    else
+      p_select <= '1';
+    end if;
+    -- 2
+    if(ascii_code = "0110010" and ascii_new = '1') then
+      p_color <= not p_color;
+    end if;
+  end process;
+  
+  LED <= not p_color; -- yellow is bright when color mode is selected
 
 end architecture;

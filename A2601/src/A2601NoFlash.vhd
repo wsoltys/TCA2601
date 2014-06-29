@@ -53,6 +53,7 @@ entity A2601NoFlash is
         
          p_start: in std_logic;
          p_select: in std_logic;
+         p_color: in std_logic;
          next_cartridge: in std_logic;
          p_bs: out std_logic;			
          LED: out std_logic_vector(2 downto 0);
@@ -287,11 +288,13 @@ begin
            -- pb(6) <= pa(6) or p_fn; --sw2
            -- pb(1) <= pa(4) or p_fn; --select
            -- pb(3) <= pa(5) or p_fn; --b/w / colour
+           
+           pb(3) <= p_color; --b/w / colour
+           
         end if;
     end process;
 	 pb(7) <= sw_toggle(0);
 	 pb(6) <= sw_toggle(1);
-	 pb(3) <= '1'; --not used
     pb(5) <= '1'; --nc ?
     pb(4) <= '1'; --nc
     pb(2) <= '1'; --nc
