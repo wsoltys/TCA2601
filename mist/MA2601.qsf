@@ -37,7 +37,7 @@
 
 set_global_assignment -name FAMILY "Cyclone III"
 set_global_assignment -name DEVICE EP3C25E144C8
-set_global_assignment -name TOP_LEVEL_ENTITY main
+set_global_assignment -name TOP_LEVEL_ENTITY MA2601
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "12.0 SP2"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "16:03:22  OCTOBER 26, 2012"
 set_global_assignment -name LAST_QUARTUS_VERSION 13.1
@@ -282,6 +282,7 @@ set_global_assignment -name VERILOG_FILE data_io.v
 set_global_assignment -name VERILOG_FILE osd.v
 set_global_assignment -name VHDL_FILE clk_div.vhd
 set_global_assignment -name VERILOG_FILE user_io.v
+set_global_assignment -name VHDL_FILE MA2601.vhd
 set_global_assignment -name VHDL_FILE ../TIA/src/NTSCLookups.vhd
 set_global_assignment -name VHDL_FILE ../TIA/src/Common.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/pacman_dblscan.vhd
@@ -296,7 +297,6 @@ set_global_assignment -name VHDL_FILE ../A6500/src/A6502.vhd
 set_global_assignment -name VHDL_FILE ../A6500/src/A6500.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/A2601NoFlash.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/A2601Core.vhd
-set_global_assignment -name VHDL_FILE ../mist/main.vhd
 set_global_assignment -name QIP_FILE ../A2601/src/vga_framebuffer.qip
 set_global_assignment -name VHDL_FILE ../TIA/src/VGAColorTable.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/DeltaSigma.vhd
