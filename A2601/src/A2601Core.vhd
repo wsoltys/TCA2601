@@ -41,7 +41,8 @@ entity A2601 is
          av0: out std_logic_vector(3 downto 0);
          av1: out std_logic_vector(3 downto 0);
          ph0_out: out std_logic;
-         ph1_out: out std_logic);
+         ph1_out: out std_logic;
+         pal: in std_logic);
 end A2601;
 
 architecture arch of A2601 is
@@ -82,7 +83,7 @@ architecture arch of A2601 is
              csyn: out std_logic;
              vsyn: out std_logic;
              hsyn: out std_logic;
-				 rgbx2: out std_logic_vector(23 downto 0);
+             rgbx2: out std_logic_vector(23 downto 0);
              cv: out std_logic_vector(7 downto 0);
              rdy: out std_logic;
              ph0: out std_logic;
@@ -92,7 +93,8 @@ architecture arch of A2601 is
              av0: out std_logic_vector(3 downto 0);
              av1: out std_logic_vector(3 downto 0);
              inpt4: in std_logic;
-             inpt5: in std_logic);
+             inpt5: in std_logic;
+             pal: in std_logic);
     end component;
 
     signal rdy: std_logic;
@@ -125,7 +127,7 @@ begin
     tia_inst: TIA
         port map(vid_clk, tia_cs, read, tia_a, d,
             colu, csyn, vsyn, hsyn, rgbx2, cv, rdy, ph0, ph1,
-            au0, au1, av0, av1, inpt4, inpt5);
+            au0, au1, av0, av1, inpt4, inpt5, pal);
 
     tia_cs <= '1' when (cpu_a(12) = '0') and (cpu_a(7) = '0') else '0';
     riot_cs <= '1' when (cpu_a(12) = '0') and (cpu_a(7) = '1') else '0';

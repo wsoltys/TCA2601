@@ -64,7 +64,8 @@ entity A2601NoFlash is
          JOYSTICK2_GND: out std_logic;
          sdi: in std_logic;
          sck: in std_logic;
-         ss2: in std_logic
+         ss2: in std_logic;
+         pal: in std_logic
       
 			);
 end A2601NoFlash;
@@ -76,7 +77,7 @@ architecture arch of A2601NoFlash is
          rst: in std_logic;
          d: inout std_logic_vector(7 downto 0);
          a: out std_logic_vector(12 downto 0);
-			r: out std_logic;
+         r: out std_logic;
          pa: inout std_logic_vector(7 downto 0);
          pb: inout std_logic_vector(7 downto 0);
          inpt4: in std_logic;
@@ -85,14 +86,15 @@ architecture arch of A2601NoFlash is
          csyn: out std_logic;
          vsyn: out std_logic;
          hsyn: out std_logic;
-			rgbx2: out std_logic_vector(23 downto 0);
+         rgbx2: out std_logic_vector(23 downto 0);
          cv: out std_logic_vector(7 downto 0);
          au0: out std_logic;
          au1: out std_logic;
          av0: out std_logic_vector(3 downto 0);
          av1: out std_logic_vector(3 downto 0);
          ph0_out: out std_logic;
-         ph1_out: out std_logic);
+         ph1_out: out std_logic;
+         pal: in std_logic);
     end component;
 	
 	 component dac is
@@ -224,7 +226,7 @@ architecture arch of A2601NoFlash is
 begin
 	  
 	ms_A2601: A2601
-        port map(vid_clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, inpt4, inpt5, open, open, vsyn, hsyn, rgbx2, cv, au0, au1, av0, av1, ph0, ph1);
+        port map(vid_clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, inpt4, inpt5, open, open, vsyn, hsyn, rgbx2, cv, au0, au1, av0, av1, ph0, ph1, pal);
 	
 	dac_inst: dac 
 		port map(audio, au, vid_clk, '0');	

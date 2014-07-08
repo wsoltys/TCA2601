@@ -577,7 +577,7 @@ entity TIA is
          csyn: out std_logic;
          hsyn: out std_logic;
          vsyn: out std_logic;
-			rgbx2: out std_logic_vector(23 downto 0);
+         rgbx2: out std_logic_vector(23 downto 0);
          cv: out std_logic_vector(7 downto 0) := "00000000";
          rdy: out std_logic;
          ph0: out std_logic;
@@ -587,7 +587,8 @@ entity TIA is
          av0: out std_logic_vector(3 downto 0);
          av1: out std_logic_vector(3 downto 0);
          inpt4: in std_logic;
-         inpt5: in std_logic
+         inpt5: in std_logic;
+         pal: in std_logic := '0'
         );
 end TIA;
 
@@ -809,7 +810,7 @@ architecture arch of TIA is
 
     signal vid_clk_dvdr: unsigned(3 downto 0) := "0000";
 	 
-	 signal vga_colu: std_logic_vector(6 downto 0);
+	  signal vga_colu: std_logic_vector(6 downto 0);
 
 
 begin
@@ -1330,7 +1331,7 @@ begin
 		clk => clkx2,
 		lum => '0' & vga_colu(2 downto 0),
 		hue => vga_colu(6 downto 3),
-		mode => "00",	--NTSC
+		mode => '0' & pal,	-- 00 = NTSC, 01 = PAL
 		outColor => rgbx2
 	);	
 		

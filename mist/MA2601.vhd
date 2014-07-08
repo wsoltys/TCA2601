@@ -88,6 +88,7 @@ architecture rtl of MA2601 is
   signal p_start: std_logic := '1';
   signal p_select: std_logic := '1';
   signal p_color: std_logic := '1';
+  signal pal: std_logic := '0';
 
 -- User IO
   signal switches   : std_logic_vector(1 downto 0);
@@ -101,7 +102,7 @@ architecture rtl of MA2601 is
   signal ps2Clk     : std_logic;
   signal ps2Data    : std_logic;
 
-  component user_io
+  component user_io_w
     port (
       SPI_CLK, SPI_SS_IO, SPI_MOSI :in std_logic;
       SPI_MISO : out std_logic;
@@ -114,7 +115,7 @@ architecture rtl of MA2601 is
       ps2_clk : out std_logic;
       ps2_data : out std_logic
     );
-  end component user_io;
+  end component user_io_w;
 
   component osd
     port (
@@ -133,7 +134,8 @@ begin
 
   SDRAM_nCAS <= '1'; -- disable ram
   res <= status(0);
-
+  p_color <= not status(2);
+  pal <= status(1);
 
 -- -----------------------------------------------------------------------
 -- A2601 core
@@ -169,7 +171,8 @@ begin
       JOYSTICK2_GND => open,
       sdi => SPI_DI,
       sck => SPI_SCK,
-      ss2 => SPI_SS2
+      ss2 => SPI_SS2,
+      pal => pal
     );
 
   -- A2601 -> OSD
@@ -255,19 +258,19 @@ begin
 
   pllosd : entity work.clk_div
     generic map (
-      scale_factor => 2
+      DIVISOR => 4
     )
     port map (
-      clk_in => vid_clk,
-      reset => '0',
-      clk_out => osd_clk
+      clk    => vid_clk,
+      reset  => '0',
+      clk_en => osd_clk
     );
 
 -- ------------------------------------------------------------------------
 -- User IO
 -- ------------------------------------------------------------------------
 
-  user_io_inst : user_io
+  user_io_inst : user_io_w
     port map (
       SPI_CLK => SPI_SCK,
       SPI_SS_IO => CONF_DATA0,
@@ -295,9 +298,9 @@ begin
       p_select <= '1';
     end if;
     -- 2
-    if(ascii_code = "0110010" and ascii_new = '1') then
-      p_color <= not p_color;
-    end if;
+--    if(ascii_code = "0110010" and ascii_new = '1') then
+--      p_color <= not p_color;
+--    end if;
   end process;
 
   LED <= not p_color; -- yellow led is bright when color mode is selected

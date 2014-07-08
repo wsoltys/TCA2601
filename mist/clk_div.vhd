@@ -1,41 +1,39 @@
--- -----------------------------------------------------------------------
---
--- frequency divider
---
--- -----------------------------------------------------------------------
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
 
 entity clk_div is
-    generic (
-        -- scale_factor = clk_in/clk_out*2
-        scale_factor : integer
-    );
-    port (
-        clk_in : in  STD_LOGIC;
-        reset  : in  STD_LOGIC;
-        clk_out: out STD_LOGIC
-    );
+	generic
+	(
+		DIVISOR   : natural
+	);
+  port
+  (
+    clk       : in std_logic;
+    reset     : in std_logic;
+
+		clk_en    : out std_logic
+  );
 end clk_div;
 
-architecture rtl of clk_div is
-    constant maxcount : integer := scale_factor-1;
-    signal temporal: STD_LOGIC;
-    signal counter : integer range 0 to maxcount := 0;
+architecture SYN of clk_div is
+
 begin
-    process (reset, clk_in) begin
-        if (reset = '1') then
-            temporal <= '0';
-            counter <= 0;
-        elsif rising_edge(clk_in) then
-            if (counter = maxcount) then
-                temporal <= NOT(temporal);
-                counter <= 0;
-            else
-                counter <= counter + 1;
-            end if;
-        end if;
-    end process;
-    
-    clk_out <= temporal;
-end rtl;
+
+	process (clk, reset)
+		variable count : integer range 0 to DIVISOR-1;
+	begin
+		if reset = '1' then
+			count := 0;
+			clk_en <= '0';
+		elsif rising_edge(clk) then
+			clk_en <= '0';
+			if count = DIVISOR-1 then
+				clk_en <= '1';
+				count := 0;
+			else
+				count := count + 1;
+			end if;
+		end if;
+	end process;
+
+end SYN;
