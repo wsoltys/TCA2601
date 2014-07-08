@@ -101,6 +101,7 @@ architecture rtl of MA2601 is
   signal clk12k     : std_logic;
   signal ps2Clk     : std_logic;
   signal ps2Data    : std_logic;
+  signal ps2_scancode : std_logic_vector(7 downto 0);
 
   component user_io_w
     port (
@@ -242,7 +243,6 @@ begin
   p2_a <= not joy1(4);
   p2_u <= not joy1(3);
   p2_d <= not joy1(2);
-  p_start <= not buttons(1);
 
 
 -- -----------------------------------------------------------------------
@@ -286,22 +286,12 @@ begin
       ps2_data => ps2Data
     );
 
-  keyboard : entity work.ps2_keyboard_to_ascii
-    port map (vid_clk, ps2Clk, ps2data, ascii_new, ascii_code);
+  keyboard : entity work.ps2Keyboard
+    port map (vid_clk, '0', ps2Clk, ps2data, ps2_scancode);
 
-  process (ascii_new)
-  begin
-    -- 1
-    if(ascii_code = "0110001" and ascii_new = '1') then
-      p_select <= '0';
-    else
-      p_select <= '1';
-    end if;
-    -- 2
---    if(ascii_code = "0110010" and ascii_new = '1') then
---      p_color <= not p_color;
---    end if;
-  end process;
+  
+  p_start <= '0' when (ps2_scancode = X"01" or buttons(1) = '1') else '1'; -- F9 or MiST right button
+  p_select <= '0' when (ps2_scancode = X"09") else '1'; -- F10
 
   LED <= not p_color; -- yellow led is bright when color mode is selected
 
