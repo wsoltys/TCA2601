@@ -22,9 +22,11 @@ module user_io_w(
 parameter CONF_STR = {
 	"MA2601;A26;",
   "O1,Video standard,NTSC,PAL;",
-  "O2,Video mode,Color,B&W;"
+  "O2,Video mode,Color,B&W;",
+  "O3,Difficulty P1,A,B;",
+  "O4,Difficulty P2,A,B;"
 };
-parameter CONF_STR_LEN = 11+24+27;
+parameter CONF_STR_LEN = 11+24+27+21+21;
 
 user_io #(.STRLEN(CONF_STR_LEN)) user_io(
 	.conf_str		( CONF_STR     ),

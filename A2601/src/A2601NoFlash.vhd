@@ -65,7 +65,8 @@ entity A2601NoFlash is
          sdi: in std_logic;
          sck: in std_logic;
          ss2: in std_logic;
-         pal: in std_logic
+         pal: in std_logic;
+         p_dif: in std_logic_vector(1 downto 0)
       
 			);
 end A2601NoFlash;
@@ -290,13 +291,14 @@ begin
            -- pb(6) <= pa(6) or p_fn; --sw2
            -- pb(1) <= pa(4) or p_fn; --select
            -- pb(3) <= pa(5) or p_fn; --b/w / colour
-           
-           pb(3) <= p_color; --b/w / colour
+          
            
         end if;
     end process;
-	 pb(7) <= sw_toggle(0);
-	 pb(6) <= sw_toggle(1);
+    
+    pb(3) <= p_color; --b/w / colour
+    pb(6) <= p_dif(0); -- p1/left difficulty
+    pb(7) <= p_dif(1); -- p2/right difficulty
     pb(5) <= '1'; --nc ?
     pb(4) <= '1'; --nc
     pb(2) <= '1'; --nc

@@ -89,6 +89,7 @@ architecture rtl of MA2601 is
   signal p_select: std_logic := '1';
   signal p_color: std_logic := '1';
   signal pal: std_logic := '0';
+  signal p_dif: std_logic_vector(1 downto 0) := (others => '0');
 
 -- User IO
   signal switches   : std_logic_vector(1 downto 0);
@@ -137,6 +138,8 @@ begin
   res <= status(0);
   p_color <= not status(2);
   pal <= status(1);
+  p_dif(0) <= status(3);
+  p_dif(1) <= status(4);
 
 -- -----------------------------------------------------------------------
 -- A2601 core
@@ -173,7 +176,8 @@ begin
       sdi => SPI_DI,
       sck => SPI_SCK,
       ss2 => SPI_SS2,
-      pal => pal
+      pal => pal,
+      p_dif => p_dif
     );
 
   -- A2601 -> OSD
