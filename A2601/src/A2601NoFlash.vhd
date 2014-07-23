@@ -429,7 +429,7 @@ begin
         end if;
     end process;
     
-    process(size, downl)
+    process(downl)
     begin
       if(downl = '0') then
         a_ram <= a;
@@ -440,6 +440,10 @@ begin
         d <= x"FF";
         forceReset <= '1';
       end if;
+    end process;
+    
+    process(size)
+    begin
       if(size <= "0001000000000000") then
         bss <= BANK00;
       elsif(size <= "0010000000000000") then
