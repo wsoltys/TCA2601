@@ -52,7 +52,7 @@ module user_io #(parameter STRLEN=0) (
 reg [6:0]         sbuf;
 reg [7:0]         cmd;
 reg [2:0] 	      bit_cnt;    // counts bits 0-7 0-7 ...
-reg [5:0]         byte_cnt;   // counts bytes
+reg [7:0]         byte_cnt;   // counts bytes
 reg [5:0]         joystick0;
 reg [5:0]         joystick1;
 reg [3:0] 	      but_sw;
@@ -158,11 +158,11 @@ always@(posedge SPI_CLK or posedge SPI_SS_IO) begin
 
 	if(SPI_SS_IO == 1) begin
 	   bit_cnt <= 3'd0;
-	   byte_cnt <= 5'd0;
+	   byte_cnt <= 8'd0;
 	end else begin
 		sbuf[6:0] <= { sbuf[5:0], SPI_MOSI };
 		bit_cnt <= bit_cnt + 3'd1;
-		if(bit_cnt == 7) byte_cnt <= byte_cnt + 5'd1;
+		if(bit_cnt == 7) byte_cnt <= byte_cnt + 8'd1;
 
 		// finished reading command byte
       if(bit_cnt == 7) begin
