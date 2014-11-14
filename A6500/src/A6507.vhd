@@ -17,9 +17,10 @@
 --  along with A2601.  If not, see <http://www.gnu.org/licenses/>.
 
 library ieee;
-use ieee.std_logic_1164.all;       
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.ALL;    
 
-use work.types.all;
+--use work.types.all;
 
 entity A6507 is 
     port(clk: in std_logic;       
@@ -43,13 +44,43 @@ architecture arch of A6507 is
              r: out std_logic);
     end component;
 
-    signal ad_full: std_logic_vector(15 downto 0);
+    signal ad_full: unsigned(15 downto 0);
+    signal cpuDi: std_logic_vector(7 downto 0);
+    signal cpuDo: unsigned(7 downto 0);
+    signal cpuWe: std_logic;
 
 begin
 
-    ad <= ad_full(12 downto 0);
+    ad <= std_logic_vector(ad_full(12 downto 0));
+    r <= not cpuWe;
+    
+    cpuDi <= d when cpuWe = '0' else "ZZZZZZZZ";
+    d <= std_logic_vector(cpuDo) when cpuWe = '1' else "ZZZZZZZZ";
+        
+	cpu: entity work.cpu65xx
+		generic map (
+			pipelineOpcode => false,
+			pipelineAluMux => false,
+			pipelineAluOut => false
+		)
+		port map (
+			clk => clk,
+			reset => rst,
+			enable => rdy or cpuWe,
+			nmi_n => '1',
+			irq_n => '1',
 
-    cpu_A6502: A6502
-        port map(clk, rst, '1', '1', rdy, d, ad_full, r);
+			di => unsigned(cpuDi),
+			addr => ad_full,
+			do => cpuDo,
+			we => cpuWe,
+
+			debugOpcode => open,
+			debugPc => open,
+			debugA => open,
+			debugX => open,
+			debugY => open,
+			debugS => open
+		);
 
 end arch;
