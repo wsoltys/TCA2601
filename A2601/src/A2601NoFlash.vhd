@@ -127,7 +127,7 @@ architecture arch of A2601NoFlash is
              size: out std_logic_vector(15 downto 0);
              clk: in std_logic;
              we: in std_logic;
-             a: in std_logic_vector(13 downto 0);
+             a: in std_logic_vector(14 downto 0);
              din: in std_logic_vector(7 downto 0);
              dout: out std_logic_vector(7 downto 0));
     end component;
@@ -135,8 +135,8 @@ architecture arch of A2601NoFlash is
     signal d: std_logic_vector(7 downto 0);
     signal d_ram: std_logic_vector(7 downto 0);
     --signal cpu_d: std_logic_vector(7 downto 0);
-    signal a: std_logic_vector(13 downto 0);
-    signal a_ram: std_logic_vector(13 downto 0);
+    signal a: std_logic_vector(14 downto 0);
+    signal a_ram: std_logic_vector(14 downto 0);
     signal pa: std_logic_vector(7 downto 0);
     signal pb: std_logic_vector(7 downto 0);
     signal inpt4: std_logic;
@@ -192,18 +192,14 @@ architecture arch of A2601NoFlash is
     constant BANKFE: bss_type := "011";
     constant BANKE0: bss_type := "100";
     constant BANK3F: bss_type := "101";
+    constant BANKF4: bss_type := "110";
 
     signal bss: bss_type := BANK00; 	--bank switching method
     signal sc: std_logic := '0';		--superchip enabled or not
-
-	signal romSelectCounter : integer range 0 to 3 := 3;
-	signal romSelectBits : std_logic_vector(1 downto 0) := "00";
-	signal resetCounter : integer range 0 to 60000000 := 60000000;
-	signal forceReset : std_logic := '0';
-	signal romAddress : std_logic_vector(13 downto 0);
   
-  signal downl : std_logic := '0';
-  signal size : std_logic_vector(15 downto 0) := (others=>'0');
+    signal forceReset : std_logic := '0';
+    signal downl : std_logic := '0';
+    signal size : std_logic_vector(15 downto 0) := (others=>'0');
 
 begin
 	  
@@ -306,13 +302,14 @@ begin
     tf_bank <= bank(1 downto 0) when (cpu_a(11) = '0') else "11";
 
     with bss select a <=
-		  "00" & cpu_a(11 downto 0) when BANK00,
-		  '0' & bank(0) & cpu_a(11 downto 0) when BANKF8,
-		  bank(1 downto 0) & cpu_a(11 downto 0) when BANKF6,
-		  '0' & bank(0) & cpu_a(11 downto 0) when BANKFE,
-		  "0" & e0_bank & cpu_a(9 downto 0) when BANKE0,
-		  '0' & tf_bank & cpu_a(10 downto 0) when BANK3F,
-		  "--------------" when others;
+		  "000" & cpu_a(11 downto 0) when BANK00,
+		  "00" & bank(0) & cpu_a(11 downto 0) when BANKF8,
+		  '0' & bank(1 downto 0) & cpu_a(11 downto 0) when BANKF6,
+      bank(2 downto 0) & cpu_a(11 downto 0) when BANKF4,
+		  "00" & bank(0) & cpu_a(11 downto 0) when BANKFE,
+		  "00" & e0_bank & cpu_a(9 downto 0) when BANKE0,
+		  "00" & tf_bank & cpu_a(10 downto 0) when BANK3F,
+		  "---------------" when others;
 
     bankswch: process(ph0)
     begin
@@ -339,6 +336,24 @@ begin
                             bank <= "0010";
                         elsif (cpu_a = "1" & X"FF9") then
                             bank <= "0011";
+                        end if;
+                    when BANKF4 =>
+                        if (cpu_a = "1" & X"FF4") then
+                            bank <= "0000";
+                        elsif (cpu_a = "1" & X"FF5") then
+                            bank <= "0001";
+                        elsif (cpu_a = "1" & X"FF6") then
+                            bank <= "0010";
+                        elsif (cpu_a = "1" & X"FF7") then
+                            bank <= "0011";
+                        elsif (cpu_a = "1" & X"FF8") then
+                            bank <= "0100";
+                        elsif (cpu_a = "1" & X"FF9") then
+                            bank <= "0101";
+                        elsif (cpu_a = "1" & X"FFA") then
+                            bank <= "0110";
+                        elsif (cpu_a = "1" & X"FFB") then
+                            bank <= "0111";
                         end if;
                     when BANKFE =>
                         if (cpu_a = "0" & X"1FE") then
@@ -387,6 +402,8 @@ begin
         bss <= BANKF8;
       elsif(size <= x"4000") then -- 16k and less
         bss <= BANKF6;
+      elsif(size <= x"8000") then -- 32k and less
+        bss <= BANKF4;
       else
         bss <= BANK00;
       end if;
