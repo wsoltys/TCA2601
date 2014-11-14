@@ -43,25 +43,26 @@ entity A2601NoFlash is
          p_l: in std_logic;
          p_r: in std_logic;
          p_a: in std_logic;
+         p_b: in std_logic;
          p_u: in std_logic;
          p_d: in std_logic;
          p2_l: in std_logic;
          p2_r: in std_logic;
          p2_a: in std_logic;
+         p2_b: in std_logic;
          p2_u: in std_logic;
          p2_d: in std_logic;
+			
+         paddle_0: in std_logic_vector(7 downto 0);
+         paddle_1: in std_logic_vector(7 downto 0);
+         paddle_2: in std_logic_vector(7 downto 0);
+         paddle_3: in std_logic_vector(7 downto 0);
+			paddle_ena: in std_logic;
         
          p_start: in std_logic;
          p_select: in std_logic;
          p_color: in std_logic;
-         next_cartridge: in std_logic;
-         p_bs: out std_logic;			
-         LED: out std_logic_vector(2 downto 0);
-        
-         I_SW :in std_logic_vector(2 downto 0);
-  
-         JOYSTICK_GND: out std_logic;
-         JOYSTICK2_GND: out std_logic;
+			
          sdi: in std_logic;
          sck: in std_logic;
          ss2: in std_logic;
@@ -81,6 +82,11 @@ architecture arch of A2601NoFlash is
          r: out std_logic;
          pa: inout std_logic_vector(7 downto 0);
          pb: inout std_logic_vector(7 downto 0);
+         paddle_0: in std_logic_vector(7 downto 0);
+         paddle_1: in std_logic_vector(7 downto 0);
+         paddle_2: in std_logic_vector(7 downto 0);
+         paddle_3: in std_logic_vector(7 downto 0);
+         paddle_ena: in std_logic;
          inpt4: in std_logic;
          inpt5: in std_logic;
          colu: out std_logic_vector(6 downto 0);
@@ -110,13 +116,6 @@ architecture arch of A2601NoFlash is
              r: in std_logic;
              d_in: in std_logic_vector(7 downto 0);
              d_out: out std_logic_vector(7 downto 0);
-             a: in std_logic_vector(6 downto 0));
-    end component;
-
-    component CartTable is
-        port(clk: in std_logic;
-             d: out std_logic_vector(10 downto 0);
-             c: out std_logic_vector(6 downto 0);
              a: in std_logic_vector(6 downto 0));
     end component;
     
@@ -183,26 +182,9 @@ architecture arch of A2601NoFlash is
     signal cpu_a: std_logic_vector(12 downto 0);
     signal cpu_d: std_logic_vector(7 downto 0);
     signal cpu_r: std_logic;
-
-    signal cart_info: std_logic_vector(10 downto 0) := "00000000000";
-    signal cart_cntr: unsigned(6 downto 0) := "0000000";
-    signal cart_max: std_logic_vector(6 downto 0);
-    signal cart_vect: std_logic_vector(6 downto 0) := "0000000";
-
-    signal cart_next: std_logic;
-    signal cart_prev: std_logic;
-    signal cart_swch: std_logic := '0';
-    signal cart_next_l: std_logic;
-    signal cart_prev_l: std_logic;
-	 signal sel: std_logic;
---	 signal ctrl_cntr: unsigned(3 downto 0);
 	--tmp
 	signal cv:  std_logic_vector(7 downto 0);
 	signal au:  std_logic_vector(4 downto 0);
--- switches
-	signal sw_toggle: std_logic_vector(2 downto 0) := "000";
-	
-	signal sw_pressed: std_logic_vector(2 downto 0) := "000";
 	
     constant BANK00: bss_type := "000";
     constant BANKF8: bss_type := "001";
@@ -218,16 +200,18 @@ architecture arch of A2601NoFlash is
 	signal romSelectBits : std_logic_vector(1 downto 0) := "00";
 	signal resetCounter : integer range 0 to 60000000 := 60000000;
 	signal forceReset : std_logic := '0';
-	signal last_next_cartridge : std_logic;
 	signal romAddress : std_logic_vector(13 downto 0);
   
   signal downl : std_logic := '0';
   signal size : std_logic_vector(15 downto 0) := (others=>'0');
-	 
+
 begin
 	  
 	ms_A2601: A2601
-        port map(vid_clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, inpt4, inpt5, open, open, vsyn, hsyn, rgbx2, cv, au0, au1, av0, av1, ph0, ph1, pal);
+        port map(vid_clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, 
+				paddle_0, paddle_1, paddle_2, paddle_3, paddle_ena, 
+				inpt4, inpt5, open, open, vsyn, hsyn, rgbx2, cv, 
+				au0, au1, av0, av1, ph0, ph1, pal);
 	
 	dac_inst: dac 
 		port map(audio, au, vid_clk, '0');	
@@ -239,7 +223,6 @@ begin
   O_HSYNC   <= hsyn;
   O_VSYNC   <= vsyn;
 
---    cpu_d <= d when a(12) = '1' else "ZZZZZZZZ";
  process(ph0)
     begin
         if (ph0'event and ph0 = '1') then
@@ -252,82 +235,43 @@ begin
             
     end process;
 
-    -- Controller inputs sampling
-    p_bs <= '0'; --- led0 ctrl_cntr(3);
-
-    -- Only one controller port supported. -- FIXME -- does 2nd port work ?
-    -- pa(3 downto 0) <= "1111";
-	 
     process(ph0)
     begin
         if (ph0'event and ph0 = '1') then
             ctrl_cntr <= ctrl_cntr + 1;
-            if (ctrl_cntr = "1111") then    -- p_bs
+            if (ctrl_cntr = "1111") then
                 p_fn <=  p_a;
                 pb(0) <= p_start; 
                 pb(1) <= p_select; 
             elsif (ctrl_cntr = "0111") then
-                pa(7 downto 4) <= p_r & p_l & p_d & p_u;
-					 pa(3 downto 0) <= p2_r & p2_l & p2_d & p2_u;
-                inpt4 <= p_a;
-					 inpt5 <= p2_a;
-					 
-					 --switches
-					 for i in 0 to 1
-					 loop
-						if I_SW(i) = '1' then
-							if sw_pressed(i) = '0' then
-								sw_pressed(i) <= '1';
-								sw_toggle(i)  <= NOT(sw_toggle(i));
-							end if;
-						else
-							sw_pressed(i) <= '0';
-						end if;
-					end loop;
-					 sw_toggle(2) <= NOT(I_SW(2)); --momentary, not slide toggle -- should this be active low ?
-            end if;
-
-           -- pb(7) <= pa(7) or p_fn; --sw1
-           -- pb(6) <= pa(6) or p_fn; --sw2
-           -- pb(1) <= pa(4) or p_fn; --select
-           -- pb(3) <= pa(5) or p_fn; --b/w / colour
-          
-           
+					 if ( paddle_ena = '0' ) then
+					   -- normal mapping
+						pa(7 downto 4) <= p_r & p_l & p_d & p_u;
+						pa(3 downto 0) <= p2_r & p2_l & p2_d & p2_u;
+						inpt4 <= p_a;
+						inpt5 <= p2_a;
+					 else
+					   -- fire button mapping when paddles are used
+						pa(7 downto 4) <= p_a & p_b & "11";
+						pa(3 downto 0) <= p2_a & p2_b & "11";
+						inpt4 <= '1';
+						inpt5 <= '1';
+					 end if;
+           end if;
         end if;
     end process;
     
-    pb(3) <= p_color; --b/w / colour
+    pb(3) <= p_color;  --b/w / colour
     pb(6) <= p_dif(0); -- p1/left difficulty
     pb(7) <= p_dif(1); -- p2/right difficulty
     pb(5) <= '1'; --nc ?
     pb(4) <= '1'; --nc
     pb(2) <= '1'; --nc
-	 
-    -- inpt5 <= '1'; --FIXME --remove line if 2p works
-	 -- leds to show state of switches
-	 -- led1 difficulty switch 1 on/off
-	 -- led2 difficulty switch 2 on/off
-	 -- led3 select switch on/off
-	 LED(1 downto 0) <=sw_toggle(1 downto 0);
-	 LED(2) <= not sw_toggle(2); --active low;
-	 
-	 JOYSTICK_GND <= '0';
-	 JOYSTICK2_GND <= '0';
-	 
+	 	 
     auv0 <= ("0" & unsigned(av0)) when (au0 = '1') else "00000";
     auv1 <= ("0" & unsigned(av1)) when (au1 = '1') else "00000";
 
     au <= std_logic_vector(auv0 + auv1);
-
-    --process(vid_clk, sys_clk_dvdr)
-    --begin
-     --   if (vid_clk'event and vid_clk = '1') then
-     --       sys_clk_dvdr <= sys_clk_dvdr + 1;
-     --       if (sys_clk_dvdr = "11101") then
-     --           rst <= '0';
-     --       end if;
-     --   end if;
-    --end process;
 
     sc_ram128x8: ram128x8
         port map(sc_clk, sc_r, sc_d_in, sc_d_out, sc_a);
@@ -362,19 +306,12 @@ begin
     tf_bank <= bank(1 downto 0) when (cpu_a(11) = '0') else "11";
 
     with bss select a <=
-        --cart_vect & 
 		  "00" & cpu_a(11 downto 0) when BANK00,
-        --cart_vect(6 downto 1) & 
 		  '0' & bank(0) & cpu_a(11 downto 0) when BANKF8,
-        --cart_vect(6 downto 2) & 
 		  bank(1 downto 0) & cpu_a(11 downto 0) when BANKF6,
-        --cart_vect(6 downto 1) & 
 		  '0' & bank(0) & cpu_a(11 downto 0) when BANKFE,
-        --cart_vect(6 downto 1) & 
 		  "0" & e0_bank & cpu_a(9 downto 0) when BANKE0,
-        --cart_vect(6 downto 1) & 
 		  '0' & tf_bank & cpu_a(10 downto 0) when BANK3F,
-        --"-------------------" when others;
 		  "--------------" when others;
 
     bankswch: process(ph0)
@@ -418,7 +355,6 @@ begin
                             e0_bank2 <= cpu_a(2 downto 0);
                         end if;
                     when BANK3F =>
-                        --if (cpu_a(12 downto 6) = "0000000") then
                         if (cpu_a = "0" & X"03F") then
                             bank(1 downto 0) <= cpu_d(1 downto 0);
                         end if;
@@ -441,14 +377,15 @@ begin
         forceReset <= '1';
       end if;
     end process;
-    
+
+	 -- derive banking scheme from cartridge size
     process(size)
     begin
-      if(size <= "0001000000000000") then
+      if(size <= x"1000") then    -- 4k and less
         bss <= BANK00;
-      elsif(size <= "0010000000000000") then
+      elsif(size <= x"2000") then -- 8k and less
         bss <= BANKF8;
-      elsif(size <= "0100000000000000") then
+      elsif(size <= x"4000") then -- 16k and less
         bss <= BANKF6;
       else
         bss <= BANK00;
@@ -458,12 +395,6 @@ begin
     data_io_inst: data_io
         port map(sck, ss2, sdi, downl, size, vid_clk, '0', a_ram, (others=>'0'), d_ram);
 
-    --bss <= cart_info(3 downto 1);
-    --sc <= cart_info(0);
-    --cart_vect <= cart_info(10 downto 4);
-	--LED <= bss;
-    --cart_next <= (not pa(7)) and (not gsel);
-    --cart_prev <= (not pa(6)) and (not gsel);
 end arch;
 
 

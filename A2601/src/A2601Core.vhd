@@ -28,6 +28,11 @@ entity A2601 is
          r: out std_logic;
          pa: inout std_logic_vector(7 downto 0);
          pb: inout std_logic_vector(7 downto 0);
+         paddle_0: in std_logic_vector(7 downto 0);
+         paddle_1: in std_logic_vector(7 downto 0);
+         paddle_2: in std_logic_vector(7 downto 0);
+         paddle_3: in std_logic_vector(7 downto 0);
+         paddle_ena: in std_logic;
          inpt4: in std_logic;
          inpt5: in std_logic;
          colu: out std_logic_vector(6 downto 0);
@@ -92,6 +97,11 @@ architecture arch of A2601 is
              au1: out std_logic;
              av0: out std_logic_vector(3 downto 0);
              av1: out std_logic_vector(3 downto 0);
+             paddle_0: in std_logic_vector(7 downto 0);
+             paddle_1: in std_logic_vector(7 downto 0);
+             paddle_2: in std_logic_vector(7 downto 0);
+             paddle_3: in std_logic_vector(7 downto 0);
+             paddle_ena: in std_logic;
              inpt4: in std_logic;
              inpt5: in std_logic;
              pal: in std_logic);
@@ -108,8 +118,7 @@ architecture arch of A2601 is
     signal tia_cs: std_logic;
     signal tia_a: std_logic_vector(5 downto 0);
     signal ph0: std_logic;
-    signal ph1: std_logic;
-
+    signal ph1: std_logic;	 
 begin
 
     ph0_out <= ph0;
@@ -127,7 +136,8 @@ begin
     tia_inst: TIA
         port map(vid_clk, tia_cs, read, tia_a, d,
             colu, csyn, vsyn, hsyn, rgbx2, cv, rdy, ph0, ph1,
-            au0, au1, av0, av1, inpt4, inpt5, pal);
+            au0, au1, av0, av1, paddle_0, paddle_1, paddle_2, paddle_3,
+				paddle_ena, inpt4, inpt5, pal);
 
     tia_cs <= '1' when (cpu_a(12) = '0') and (cpu_a(7) = '0') else '0';
     riot_cs <= '1' when (cpu_a(12) = '0') and (cpu_a(7) = '1') else '0';

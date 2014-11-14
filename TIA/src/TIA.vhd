@@ -436,6 +436,42 @@ begin
             
 end arch;
 
+-- XYZ
+library ieee;
+use ieee.std_logic_1164.all;       
+use ieee.numeric_std.all;
+
+entity paddle is
+   port(clk: in std_logic;
+        value: in std_logic_vector(7 downto 0);
+        rst: in std_logic;       
+        o: out std_logic
+     );
+end paddle;
+
+architecture arch of paddle is 
+begin
+	process(clk, rst)
+		variable cnt: integer range 0 to 190;
+	begin 
+		if( rst = '1' ) then
+			-- map -128..127 -> 190..0
+			cnt := to_integer(96 + signed(value)/2 + signed(value)/4);
+	   elsif (clk'event and clk = '1') then
+			if(cnt /= 190) then
+				cnt := cnt + 1;
+			end if;
+      end if;
+
+		-- return 1 if counter has "discharged"
+		if(cnt = 190) then
+			o <= '1';
+		else
+			o <= '0';
+		end if;
+	end process;
+end arch;
+
 library ieee;
 use ieee.std_logic_1164.all;       
 
@@ -586,6 +622,11 @@ entity TIA is
          au1: out std_logic;
          av0: out std_logic_vector(3 downto 0);
          av1: out std_logic_vector(3 downto 0);
+         paddle_0: in std_logic_vector(7 downto 0);
+         paddle_1: in std_logic_vector(7 downto 0);
+         paddle_2: in std_logic_vector(7 downto 0);
+         paddle_3: in std_logic_vector(7 downto 0);
+         paddle_ena: in std_logic;
          inpt4: in std_logic;
          inpt5: in std_logic;
          pal: in std_logic := '0'
@@ -683,6 +724,14 @@ architecture arch of TIA is
              a: in std_logic_vector(4 downto 0);
              o: out std_logic
             );
+    end component;
+
+	 component paddle is
+			port(clk: in std_logic;
+				  value: in std_logic_vector(7 downto 0);
+				  rst: in std_logic;       
+				  o: out std_logic
+			);
     end component;
 
     signal h_lfsr_out: std_logic_vector(5 downto 0);
@@ -812,8 +861,17 @@ architecture arch of TIA is
 	 
 	  signal vga_colu: std_logic_vector(6 downto 0);
 
+     signal inpt03_chg: std_logic;
+	  signal inpt0: std_logic;
+	  signal inpt1: std_logic;
+	  signal inpt2: std_logic;
+	  signal inpt3: std_logic;
 
 begin
+    paddle0: paddle port map(hsync, paddle_0, inpt03_chg, inpt0);
+    paddle1: paddle port map(hsync, paddle_1, inpt03_chg, inpt1);
+    paddle2: paddle port map(hsync, paddle_2, inpt03_chg, inpt2);
+    paddle3: paddle port map(hsync, paddle_3, inpt03_chg, inpt3);
 
     h_cntr: cntr2 port map(clk, h_cntr_rst, '1', h_cntr_out);
     lfsr: lfsr6 port map(clk, h_lfsr_rst, h_lfsr_cnt, h_lfsr_out);
@@ -973,15 +1031,34 @@ begin
                     d(6) <= 'Z';
                 when A_CXPPMM =>
                     d(7 downto 6) <= cx(14 downto 13);
-                -- FIXME: Paddles not supported at the moment.
-                when A_INPT0 =>
-                    d(7 downto 6) <= "00";
+					 when A_INPT0 =>
+						  if(paddle_ena = '1') then
+								d(7) <= inpt0;
+						  else
+						 		d(7) <= '1';
+						  end if;
+                    d(6) <= '0';
                 when A_INPT1 =>
-                    d(7 downto 6) <= "00";
+						  if(paddle_ena = '1') then
+								d(7) <= inpt1;
+						  else
+						 		d(7) <= '1';
+						  end if;
+                    d(6) <= '0';
                 when A_INPT2 =>
-                    d(7 downto 6) <= "00";
+						  if(paddle_ena = '1') then
+								d(7) <= inpt2;
+						  else
+						 		d(7) <= '1';
+						  end if;
+                    d(6) <= '0';
                 when A_INPT3 =>
-                    d(7 downto 6) <= "00";
+						  if(paddle_ena = '1') then
+								d(7) <= inpt3;
+						  else
+						 		d(7) <= '1';
+						  end if;
+                    d(6) <= '0';
                 when A_INPT4 =>
                     if (inpt45_len = '1') then
                         d(7) <= inpt4_l;
@@ -1011,6 +1088,7 @@ begin
                     when A_VSYNC =>
                         vsync <= d(1);
                     when A_VBLANK =>
+                        inpt03_chg <= d(7);
                         inpt45_len <= d(6);
                         vblank <= d(1);
                     when A_PF0 =>

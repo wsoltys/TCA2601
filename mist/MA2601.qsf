@@ -276,7 +276,6 @@ set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
 set_global_assignment -name VHDL_FILE ps2kbd.vhd
 set_global_assignment -name VHDL_FILE keyboard.vhd
-set_global_assignment -name VERILOG_FILE user_io_w.v
 set_global_assignment -name VERILOG_FILE data_io_ram.v
 set_global_assignment -name VERILOG_FILE data_io.v
 set_global_assignment -name VERILOG_FILE osd.v

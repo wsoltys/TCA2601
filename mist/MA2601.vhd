@@ -78,11 +78,13 @@ architecture rtl of MA2601 is
   signal p_l: std_logic := '0';
   signal p_r: std_logic := '0';
   signal p_a: std_logic := '0';
+  signal p_b: std_logic := '0';
   signal p_u: std_logic := '0';
   signal p_d: std_logic := '0';
   signal p2_l: std_logic := '0';
   signal p2_r: std_logic := '0';
   signal p2_a: std_logic := '0';
+  signal p2_b: std_logic := '0';
   signal p2_u: std_logic := '0';
   signal p2_d: std_logic := '0';
   signal p_start: std_logic := '1';
@@ -94,8 +96,10 @@ architecture rtl of MA2601 is
 -- User IO
   signal switches   : std_logic_vector(1 downto 0);
   signal buttons    : std_logic_vector(1 downto 0);
-  signal joy0       : std_logic_vector(5 downto 0);
-  signal joy1       : std_logic_vector(5 downto 0);
+  signal joy0       : std_logic_vector(7 downto 0);
+  signal joy1       : std_logic_vector(7 downto 0);
+  signal joy_a_0    : std_logic_vector(15 downto 0);
+  signal joy_a_1    : std_logic_vector(15 downto 0);
   signal status     : std_logic_vector(7 downto 0);
   signal ascii_new  : std_logic;
   signal ascii_code : STD_LOGIC_VECTOR(6 DOWNTO 0);
@@ -104,20 +108,43 @@ architecture rtl of MA2601 is
   signal ps2Data    : std_logic;
   signal ps2_scancode : std_logic_vector(7 downto 0);
 
-  component user_io_w
+  -- config string used by the io controller to fill the OSD
+  constant CONF_STR : string := "MA2601;A26;O1,Video standard,NTSC,PAL;O2,Video mode,Color,B&W;O3,Difficulty P1,A,B;O4,Difficulty P2,A,B;O5,Controller,Joystick,Paddle";
+
+  function to_slv(s: string) return std_logic_vector is
+    constant ss: string(1 to s'length) := s;
+    variable rval: std_logic_vector(1 to 8 * s'length);
+    variable p: integer;
+    variable c: integer;
+  
+  begin  
+    for i in ss'range loop
+      p := 8 * i;
+      c := character'pos(ss(i));
+      rval(p - 7 to p) := std_logic_vector(to_unsigned(c,8));
+    end loop;
+    return rval;
+
+  end function;
+  
+  component user_io
+	 generic ( STRLEN : integer := 0 );
     port (
       SPI_CLK, SPI_SS_IO, SPI_MOSI :in std_logic;
       SPI_MISO : out std_logic;
-      SWITCHES : out std_logic_vector(1 downto 0);
-      BUTTONS : out std_logic_vector(1 downto 0);
-      JOY0 : out std_logic_vector(5 downto 0);
-      JOY1 : out std_logic_vector(5 downto 0);
+      conf_str : in std_logic_vector(8*STRLEN-1 downto 0);
+      switches : out std_logic_vector(1 downto 0);
+      buttons : out std_logic_vector(1 downto 0);
+      joystick_0 : out std_logic_vector(7 downto 0);
+      joystick_1 : out std_logic_vector(7 downto 0);
+      joystick_analog_0 : out std_logic_vector(15 downto 0);
+      joystick_analog_1 : out std_logic_vector(15 downto 0);
       status : out std_logic_vector(7 downto 0);
-      clk : in std_logic;
-      ps2_clk : out std_logic;
-      ps2_data : out std_logic
+      ps2_clk : in std_logic;
+      ps2_kbd_clk : out std_logic;
+      ps2_kbd_data : out std_logic
     );
-  end component user_io_w;
+  end component user_io;
 
   component osd
     port (
@@ -138,8 +165,8 @@ begin
   res <= status(0);
   p_color <= not status(2);
   pal <= status(1);
-  p_dif(0) <= status(3);
-  p_dif(1) <= status(4);
+  p_dif(0) <= not status(3);
+  p_dif(1) <= not status(4);
 
 -- -----------------------------------------------------------------------
 -- A2601 core
@@ -157,22 +184,23 @@ begin
       p_l => p_l,
       p_r => p_r,
       p_a => p_a,
+      p_b => p_b,
       p_u => p_u,
       p_d => p_d,
       p2_l => p2_l,
       p2_r => p2_r,
       p2_a => p2_a,
+      p2_b => p2_b,
       p2_u => p2_u,
       p2_d => p2_d,
+		paddle_0 => joy_a_0(15 downto 8),
+		paddle_1 => joy_a_0(7 downto 0),
+		paddle_2 => joy_a_1(15 downto 8),
+		paddle_3 => joy_a_1(7 downto 0),
+		paddle_ena => status(5),
       p_start => p_start,
       p_select => p_select,
       p_color => p_color,
-      next_cartridge => '0', --next_cartridge,
-      p_bs => open,
-      LED => open,
-      I_SW => "111",
-      JOYSTICK_GND => open,
-      JOYSTICK2_GND => open,
       sdi => SPI_DI,
       sck => SPI_SCK,
       ss2 => SPI_SS2,
@@ -236,15 +264,18 @@ begin
   -- bit 2: left
   -- bit 3: right
   -- bit 4: fire
+  -- bit 5: 2nd fire (required for paddle emulation)
   p_l <= not joy0(1);
   p_r <= not joy0(0);
   p_a <= not joy0(4);
+  p_b <= not joy0(5);
   p_u <= not joy0(3);
   p_d <= not joy0(2);
 
   p2_l <= not joy1(1);
   p2_r <= not joy1(0);
   p2_a <= not joy1(4);
+  p2_b <= not joy1(5);
   p2_u <= not joy1(3);
   p2_d <= not joy1(2);
 
@@ -274,28 +305,32 @@ begin
 -- User IO
 -- ------------------------------------------------------------------------
 
-  user_io_inst : user_io_w
-    port map (
+  user_io_inst : user_io
+ 	generic map (STRLEN => CONF_STR'length)
+   port map (
       SPI_CLK => SPI_SCK,
       SPI_SS_IO => CONF_DATA0,
       SPI_MOSI => SPI_DI,
       SPI_MISO => SPI_DO,
-      SWITCHES => switches,
-      BUTTONS  => buttons,
-      JOY0 => joy0,
-      JOY1 => joy1,
+		conf_str => to_slv(CONF_STR),
+      switches => switches,
+      buttons  => buttons,
+      joystick_1 => joy0,
+      joystick_0 => joy1,
+      joystick_analog_1 => joy_a_0,
+      joystick_analog_0 => joy_a_1,
       status => status,
-      clk => clk12k,
-      ps2_clk => ps2Clk,
-      ps2_data => ps2Data
+      ps2_clk => clk12k,
+      ps2_kbd_clk => ps2Clk,
+      ps2_kbd_data => ps2Data
     );
 
   keyboard : entity work.ps2Keyboard
     port map (vid_clk, '0', ps2Clk, ps2data, ps2_scancode);
 
-  
-  p_start <= '0' when (ps2_scancode = X"01" or buttons(1) = '1') else '1'; -- F9 or MiST right button
-  p_select <= '0' when (ps2_scancode = X"09") else '1'; -- F10
+  -- if a gamepad has 4 buttons then buttons 3 and 4 are mapped to start and select
+  p_start <= '0' when (ps2_scancode = X"01" or buttons(1) = '1' or joy0(7) = '1' or joy1(7) = '1' ) else '1'; -- F9 or MiST right button
+  p_select <= '0' when (ps2_scancode = X"09" or joy0(6) = '1' or joy1(6) = '1' ) else '1'; -- F10
 
   LED <= not p_color; -- yellow led is bright when color mode is selected
 
