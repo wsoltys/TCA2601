@@ -109,7 +109,7 @@ architecture rtl of MA2601 is
   signal ps2_scancode : std_logic_vector(7 downto 0);
 
   -- config string used by the io controller to fill the OSD
-  constant CONF_STR : string := "MA2601;A26;O1,Video standard,NTSC,PAL;O2,Video mode,Color,B&W;O3,Difficulty P1,A,B;O4,Difficulty P2,A,B;O5,Controller,Joystick,Paddle";
+  constant CONF_STR : string := "MA2601;A26;O1,Video standard,NTSC,PAL;O2,Video mode,Color,B&W;O3,Difficulty P1,A,B;O4,Difficulty P2,A,B;O5,Controller,Joystick,Paddle;O6,Enable Scanlines,no,yes;";
 
   function to_slv(s: string) return std_logic_vector is
     constant ss: string(1 to s'length) := s;
@@ -140,6 +140,7 @@ architecture rtl of MA2601 is
       joystick_analog_0 : out std_logic_vector(15 downto 0);
       joystick_analog_1 : out std_logic_vector(15 downto 0);
       status : out std_logic_vector(7 downto 0);
+      sd_sdhc : in std_logic;
       ps2_clk : in std_logic;
       ps2_kbd_clk : out std_logic;
       ps2_kbd_data : out std_logic
@@ -148,7 +149,7 @@ architecture rtl of MA2601 is
 
   component osd
     port (
-      pclk, sck, ss, sdi, hs_in, vs_in : in std_logic;
+      pclk, sck, ss, sdi, hs_in, vs_in, scanline_ena_h : in std_logic;
       red_in, blue_in, green_in : in std_logic_vector(5 downto 0);
       red_out, blue_out, green_out : out std_logic_vector(5 downto 0);
       hs_out, vs_out : out std_logic
@@ -193,11 +194,11 @@ begin
       p2_b => p2_b,
       p2_u => p2_u,
       p2_d => p2_d,
-		paddle_0 => joy_a_0(15 downto 8),
-		paddle_1 => joy_a_0(7 downto 0),
-		paddle_2 => joy_a_1(15 downto 8),
-		paddle_3 => joy_a_1(7 downto 0),
-		paddle_ena => status(5),
+      paddle_0 => joy_a_0(15 downto 8),
+      paddle_1 => joy_a_0(7 downto 0),
+      paddle_2 => joy_a_1(15 downto 8),
+      paddle_3 => joy_a_1(7 downto 0),
+      paddle_ena => status(5),
       p_start => p_start,
       p_select => p_select,
       p_color => p_color,
@@ -220,6 +221,7 @@ begin
       blue_in => O_VIDEO_B,
       hs_in => not O_HSYNC,
       vs_in => not O_VSYNC,
+      scanline_ena_h => status(6),
       red_out => VGA_R,
       green_out => VGA_G,
       blue_out => VGA_B,
@@ -320,6 +322,7 @@ begin
       joystick_analog_1 => joy_a_0,
       joystick_analog_0 => joy_a_1,
       status => status,
+      sd_sdhc => '1',
       ps2_clk => clk12k,
       ps2_kbd_clk => ps2Clk,
       ps2_kbd_data => ps2Data
