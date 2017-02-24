@@ -629,7 +629,8 @@ entity TIA is
          paddle_ena: in std_logic;
          inpt4: in std_logic;
          inpt5: in std_logic;
-         pal: in std_logic := '0'
+         pal: in std_logic := '0';
+         tv15khz: in std_logic := '0'
         );
 end TIA;
 
@@ -1392,7 +1393,8 @@ begin
     end process;
 
     clk <= vid_clk_dvdr(3);
-    clkx2 <= vid_clk_dvdr(2);
+    -- tv15khz needs half the clock rate
+	 clkx2 <= vid_clk_dvdr(3) when tv15khz='1' else vid_clk_dvdr(2);
 	 
 	Inst_VGA_SCANDBL: VGA_SCANDBL PORT MAP(
 		I => int_colu,

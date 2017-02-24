@@ -92,6 +92,7 @@ architecture rtl of MA2601 is
   signal p_color: std_logic := '1';
   signal pal: std_logic := '0';
   signal p_dif: std_logic_vector(1 downto 0) := (others => '0');
+  signal tv15khz: std_logic := '0';
 
 -- User IO
   signal switches   : std_logic_vector(1 downto 0);
@@ -107,7 +108,12 @@ architecture rtl of MA2601 is
   signal ps2Clk     : std_logic;
   signal ps2Data    : std_logic;
   signal ps2_scancode : std_logic_vector(7 downto 0);
+  signal scandoubler_disable : std_logic;
 
+  signal vga_vsync_i : std_logic;
+  signal vga_hsync_i : std_logic;
+
+  
   -- config string used by the io controller to fill the OSD
   constant CONF_STR : string := "MA2601;A26;O1,Video standard,NTSC,PAL;O2,Video mode,Color,B&W;O3,Difficulty P1,A,B;O4,Difficulty P2,A,B;O5,Controller,Joystick,Paddle;O6,Enable Scanlines,no,yes;";
 
@@ -135,6 +141,7 @@ architecture rtl of MA2601 is
       conf_str : in std_logic_vector(8*STRLEN-1 downto 0);
       switches : out std_logic_vector(1 downto 0);
       buttons : out std_logic_vector(1 downto 0);
+      scandoubler_disable : out std_logic;
       joystick_0 : out std_logic_vector(7 downto 0);
       joystick_1 : out std_logic_vector(7 downto 0);
       joystick_analog_0 : out std_logic_vector(15 downto 0);
@@ -206,7 +213,8 @@ begin
       sck => SPI_SCK,
       ss2 => SPI_SS2,
       pal => pal,
-      p_dif => p_dif
+      p_dif => p_dif,
+      tv15khz => tv15khz
     );
 
   -- A2601 -> OSD
@@ -225,14 +233,18 @@ begin
       red_out => VGA_R,
       green_out => VGA_G,
       blue_out => VGA_B,
-      hs_out => VGA_HS,
-      vs_out => VGA_VS
+      hs_out => vga_hsync_i,
+      vs_out => vga_vsync_i
     );
 
   AUDIO_L <= audio;
   AUDIO_R <= audio;
 
-    
+  -- Create composite sync and high vsync if using tv15khz.
+  VGA_HS <= not (vga_hsync_i xor vga_vsync_i) when tv15khz='1' else vga_hsync_i;
+  VGA_VS <= '1' when tv15khz='1' else vga_vsync_i;
+
+	 
 
   -- 9 pin d-sub joystick pinout:
   -- pin 1: up
@@ -317,6 +329,7 @@ begin
 		conf_str => to_slv(CONF_STR),
       switches => switches,
       buttons  => buttons,
+		scandoubler_disable => tv15khz,
       joystick_1 => joy0,
       joystick_0 => joy1,
       joystick_analog_1 => joy_a_0,
