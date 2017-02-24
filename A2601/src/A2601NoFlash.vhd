@@ -67,7 +67,8 @@ entity A2601NoFlash is
          sck: in std_logic;
          ss2: in std_logic;
          pal: in std_logic;
-         p_dif: in std_logic_vector(1 downto 0)
+         p_dif: in std_logic_vector(1 downto 0);
+         tv15khz: in std_logic
       
 			);
 end A2601NoFlash;
@@ -101,7 +102,8 @@ architecture arch of A2601NoFlash is
          av1: out std_logic_vector(3 downto 0);
          ph0_out: out std_logic;
          ph1_out: out std_logic;
-         pal: in std_logic);
+         pal: in std_logic;
+         tv15khz: in std_logic);
     end component;
 	
 	 component dac is
@@ -207,7 +209,7 @@ begin
         port map(vid_clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, 
 				paddle_0, paddle_1, paddle_2, paddle_3, paddle_ena, 
 				inpt4, inpt5, open, open, vsyn, hsyn, rgbx2, cv, 
-				au0, au1, av0, av1, ph0, ph1, pal);
+				au0, au1, av0, av1, ph0, ph1, pal, tv15khz);
 	
 	dac_inst: dac 
 		port map(audio, au, vid_clk, '0');	

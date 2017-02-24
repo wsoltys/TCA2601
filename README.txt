@@ -11,6 +11,9 @@ Current limitations:
 - supports only the common Atari bank switching schemes
 - no illegal opcodes
 
+Supports mist.ini "scandouble_disable" for RGB 15khz output, or just hold the 
+middle MiST button to switch between modes.
+
 All MiST related files including the Quartus project files are in the 'mist' subdirectory.
 
 Homepage: http://ws0.org/tag/ma2601/

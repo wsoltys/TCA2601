@@ -47,7 +47,8 @@ entity A2601 is
          av1: out std_logic_vector(3 downto 0);
          ph0_out: out std_logic;
          ph1_out: out std_logic;
-         pal: in std_logic);
+         pal: in std_logic;
+         tv15khz: in std_logic);
 end A2601;
 
 architecture arch of A2601 is
@@ -104,7 +105,8 @@ architecture arch of A2601 is
              paddle_ena: in std_logic;
              inpt4: in std_logic;
              inpt5: in std_logic;
-             pal: in std_logic);
+             pal: in std_logic;
+             tv15khz: in std_logic);
     end component;
 
     signal rdy: std_logic;
@@ -137,7 +139,7 @@ begin
         port map(vid_clk, tia_cs, read, tia_a, d,
             colu, csyn, vsyn, hsyn, rgbx2, cv, rdy, ph0, ph1,
             au0, au1, av0, av1, paddle_0, paddle_1, paddle_2, paddle_3,
-				paddle_ena, inpt4, inpt5, pal);
+				paddle_ena, inpt4, inpt5, pal, tv15khz);
 
     tia_cs <= '1' when (cpu_a(12) = '0') and (cpu_a(7) = '0') else '0';
     riot_cs <= '1' when (cpu_a(12) = '0') and (cpu_a(7) = '1') else '0';
