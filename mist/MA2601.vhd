@@ -104,7 +104,6 @@ architecture rtl of MA2601 is
   signal status     : std_logic_vector(7 downto 0);
   signal ascii_new  : std_logic;
   signal ascii_code : STD_LOGIC_VECTOR(6 DOWNTO 0);
-  signal clk12k     : std_logic;
   signal ps2Clk     : std_logic;
   signal ps2Data    : std_logic;
   signal ps2_scancode : std_logic_vector(7 downto 0);
@@ -115,7 +114,7 @@ architecture rtl of MA2601 is
 
   
   -- config string used by the io controller to fill the OSD
-  constant CONF_STR : string := "MA2601;A26;O1,Video standard,NTSC,PAL;O2,Video mode,Color,B&W;O3,Difficulty P1,A,B;O4,Difficulty P2,A,B;O5,Controller,Joystick,Paddle;O6,Enable Scanlines,no,yes;";
+  constant CONF_STR : string := "MA2601;A26BIN;O1,Video standard,NTSC,PAL;O2,Video mode,Color,B&W;O3,Difficulty P1,A,B;O4,Difficulty P2,A,B;O5,Controller,Joystick,Paddle;O6,Enable Scanlines,no,yes;";
 
   function to_slv(s: string) return std_logic_vector is
     constant ss: string(1 to s'length) := s;
@@ -136,6 +135,7 @@ architecture rtl of MA2601 is
   component user_io
 	 generic ( STRLEN : integer := 0 );
     port (
+      clk_sys: in std_logic;
       SPI_CLK, SPI_SS_IO, SPI_MOSI :in std_logic;
       SPI_MISO : out std_logic;
       conf_str : in std_logic_vector(8*STRLEN-1 downto 0);
@@ -148,7 +148,6 @@ architecture rtl of MA2601 is
       joystick_analog_1 : out std_logic_vector(15 downto 0);
       status : out std_logic_vector(7 downto 0);
       sd_sdhc : in std_logic;
-      ps2_clk : in std_logic;
       ps2_kbd_clk : out std_logic;
       ps2_kbd_data : out std_logic
     );
@@ -301,7 +300,6 @@ begin
     port map (
       inclk0 => CLOCK_27(0),
       c0 => vid_clk,
-      c1 => clk12k,
       locked => open
     );
 
@@ -322,6 +320,7 @@ begin
   user_io_inst : user_io
  	generic map (STRLEN => CONF_STR'length)
    port map (
+      clk_sys => vid_clk,
       SPI_CLK => SPI_SCK,
       SPI_SS_IO => CONF_DATA0,
       SPI_MOSI => SPI_DI,
@@ -336,7 +335,6 @@ begin
       joystick_analog_0 => joy_a_1,
       status => status,
       sd_sdhc => '1',
-      ps2_clk => clk12k,
       ps2_kbd_clk => ps2Clk,
       ps2_kbd_data => ps2Data
     );

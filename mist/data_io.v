@@ -82,7 +82,7 @@ always@(posedge sck, posedge ss) begin
 		else				cnt <= 4'd8;
 
 		// finished command byte
-      if(cnt == 7)
+		if(cnt == 7)
 			cmd <= {sbuf, sdi};
 
 		// prepare/end transmission
@@ -107,16 +107,16 @@ end
 data_io_ram data_io_ram (
 	// wire up cpu port
 	.address_a   	( a					),
-	.clock_a			( clk					),
+	.clock_a		( clk					),
 	.data_a			( din					),
 	.wren_a			( we					),
-	.q_a				( dout				),
+	.q_a			( dout				),
 	
 	// io controller port
 	.address_b		( addr[14:0]		),
-	.clock_b			( rclk				),
-	.data_b			( {sbuf, sdi}		),
-	.wren_b			( (cmd == UIO_FILE_TX_DAT) && !ss	)
+	.clock_b		( sck				),
+	.data_b			( data		),
+	.wren_b			( rclk	)
 );
 
 endmodule
