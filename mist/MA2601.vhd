@@ -90,6 +90,7 @@ architecture rtl of MA2601 is
   signal p_start: std_logic := '1';
   signal p_select: std_logic := '1';
   signal p_color: std_logic := '1';
+  signal sc: std_logic := '0';
   signal pal: std_logic := '0';
   signal p_dif: std_logic_vector(1 downto 0) := (others => '0');
 
@@ -100,7 +101,7 @@ architecture rtl of MA2601 is
   signal joy1       : std_logic_vector(7 downto 0);
   signal joy_a_0    : std_logic_vector(15 downto 0);
   signal joy_a_1    : std_logic_vector(15 downto 0);
-  signal status     : std_logic_vector(7 downto 0);
+  signal status     : std_logic_vector(31 downto 0);
   signal ascii_new  : std_logic;
   signal ascii_code : STD_LOGIC_VECTOR(6 DOWNTO 0);
   signal ps2Clk     : std_logic;
@@ -108,7 +109,15 @@ architecture rtl of MA2601 is
   signal ps2_scancode : std_logic_vector(7 downto 0);
   signal scandoubler_disable : std_logic;
   signal ypbpr      : std_logic;
-  
+
+-- Data IO
+  signal downl      : std_logic;
+  signal index      : std_logic_vector(7 downto 0);
+  signal rom_a      : std_logic_vector(14 downto 0);
+  signal rom_do     : std_logic_vector(7 downto 0);
+  signal rom_size   : std_logic_vector(15 downto 0);
+
+-- Video 
   signal sd_r         : std_logic_vector(5 downto 0);
   signal sd_g         : std_logic_vector(5 downto 0);
   signal sd_b         : std_logic_vector(5 downto 0);
@@ -132,6 +141,7 @@ architecture rtl of MA2601 is
   -- config string used by the io controller to fill the OSD
   constant CONF_STR : string :=
     "MA2601;A26BIN;"&
+    "F,A26BIN,Load SuperChip;"&
     "O1,Video standard,NTSC,PAL;"&
     "O2,Video mode,Color,B&W;"&
     "O3,Difficulty P1,A,B;"&
@@ -170,12 +180,26 @@ architecture rtl of MA2601 is
       joystick_1 : out std_logic_vector(7 downto 0);
       joystick_analog_0 : out std_logic_vector(15 downto 0);
       joystick_analog_1 : out std_logic_vector(15 downto 0);
-      status : out std_logic_vector(7 downto 0);
+      status : out std_logic_vector(31 downto 0);
       sd_sdhc : in std_logic;
       ps2_kbd_clk : out std_logic;
       ps2_kbd_data : out std_logic
     );
   end component user_io;
+
+  component data_io is
+    port(sck: in std_logic;
+        ss: in std_logic;
+        sdi: in std_logic;
+        downloading: out std_logic;
+        size: out std_logic_vector(15 downto 0);
+        index: out std_logic_vector(7 downto 0);
+        clk: in std_logic;
+        we: in std_logic;
+        a: in std_logic_vector(14 downto 0);
+        din: in std_logic_vector(7 downto 0);
+        dout: out std_logic_vector(7 downto 0));
+    end component;
 
   component scandoubler
     port (
@@ -235,12 +259,12 @@ begin
 -- -----------------------------------------------------------------------
 
   SDRAM_nCAS <= '1'; -- disable ram
-  res <= status(0);
+  res <= status(0) or buttons(1) or downl;
   p_color <= not status(2);
   pal <= status(1);
   p_dif(0) <= not status(3);
   p_dif(1) <= not status(4);
-
+  sc <= index(1); -- 2nd menu index - load with SuperChip support
 -- -----------------------------------------------------------------------
 -- A2601 core
 -- -----------------------------------------------------------------------
@@ -275,9 +299,10 @@ begin
       p_start => p_start,
       p_select => p_select,
       p_color => p_color,
-      sdi => SPI_DI,
-      sck => SPI_SCK,
-      ss2 => SPI_SS2,
+      sc => sc,
+      rom_a => rom_a,
+      rom_do => rom_do,
+      rom_size => rom_size,
       pal => pal,
       p_dif => p_dif,
       tv15khz => '1'
@@ -435,6 +460,9 @@ begin
       ps2_kbd_clk => ps2Clk,
       ps2_kbd_data => ps2Data
     );
+
+  data_io_inst: data_io
+        port map(SPI_SCK, SPI_SS2, SPI_DI, downl, rom_size, index, vid_clk, '0', rom_a, (others=>'0'), rom_do);
 
   keyboard : entity work.ps2Keyboard
     port map (vid_clk, '0', ps2Clk, ps2data, ps2_scancode);

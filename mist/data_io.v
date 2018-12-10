@@ -26,8 +26,9 @@ module data_io (
 	input         ss,
 	input         sdi,
 
-	output        downloading,   // signal indicating an active download
-	output [15:0] size,          // number of bytes in input buffer
+	output reg        downloading,   // signal indicating an active download
+	output reg [15:0] size,          // number of bytes in input buffer
+    output reg  [7:0] index,
 	
 	// cpu ram interface
 	input 			clk,
@@ -38,8 +39,6 @@ module data_io (
 );
 
 parameter START_ADDR = 16'h0000;
-
-assign size = addr;
 
 // *********************************************************************************
 // spi client
@@ -57,9 +56,10 @@ reg rclk /* synthesis noprune */;
 
 localparam UIO_FILE_TX      = 8'h53;
 localparam UIO_FILE_TX_DAT  = 8'h54;
+localparam UIO_FILE_INDEX   = 8'h55;
 
-assign downloading = downloading_reg;
-reg downloading_reg = 1'b0;
+reg        downloading_reg = 1'b0;
+reg  [7:0] index_reg = 7'b0;
 
 // data_io has its own SPI interface to the io controller
 always@(posedge sck, posedge ss) begin
@@ -94,13 +94,23 @@ always@(posedge sck, posedge ss) begin
 			end else
 				downloading_reg <= 1'b0; 
 		end
-		
+
 		// command 0x54: UIO_FILE_TX
 		if((cmd == UIO_FILE_TX_DAT) && (cnt == 15)) begin
 			data <= {sbuf, sdi};
 			rclk <= 1'b1;
 		end
+
+        // expose file (menu) index
+        if((cmd == UIO_FILE_INDEX) && (cnt == 15))
+            index_reg <= {sbuf[3:0], sdi};
 	end
+end
+
+always@(posedge clk) begin
+    index <= index_reg;
+    downloading <= downloading_reg;
+    size <= addr;
 end
 
 // include the embedded dual port ram
