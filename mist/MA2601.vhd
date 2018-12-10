@@ -65,7 +65,6 @@ architecture rtl of MA2601 is
 
 -- System clocks
   signal vid_clk: std_logic := '0';
-  signal osd_clk : std_logic := '0';
 
 -- A2601
   signal audio: std_logic := '0';
@@ -219,7 +218,7 @@ begin
   -- A2601 -> OSD
   osd_inst : osd
     port map (
-      pclk => osd_clk,
+      pclk => vid_clk,
       sdi => SPI_DI,
       sck => SPI_SCK,
       ss => SPI_SS3,
@@ -301,16 +300,6 @@ begin
       inclk0 => CLOCK_27(0),
       c0 => vid_clk,
       locked => open
-    );
-
-  pllosd : entity work.clk_div
-    generic map (
-      DIVISOR => 4
-    )
-    port map (
-      clk    => vid_clk,
-      reset  => '0',
-      clk_en => osd_clk
     );
 
 -- ------------------------------------------------------------------------
