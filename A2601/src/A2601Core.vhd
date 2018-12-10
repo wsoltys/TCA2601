@@ -22,6 +22,7 @@ use ieee.std_logic_1164.all;
 
 entity A2601 is
     port(vid_clk: in std_logic;
+         clk: in std_logic;
          rst: in std_logic;
          d: inout std_logic_vector(7 downto 0);
          a: out std_logic_vector(12 downto 0);
@@ -81,6 +82,7 @@ architecture arch of A2601 is
 
     component TIA is
         port(vid_clk: in std_logic;
+             clk: in std_logic;
              cs: in std_logic;
              r: in std_logic;
              a: in std_logic_vector(5 downto 0);
@@ -136,7 +138,7 @@ begin
             riot_irq, d, pa, pb, riot_pa7, riot_a);
 
     tia_inst: TIA
-        port map(vid_clk, tia_cs, read, tia_a, d,
+        port map(vid_clk, clk, tia_cs, read, tia_a, d,
             colu, csyn, vsyn, hsyn, rgbx2, cv, rdy, ph0, ph1,
             au0, au1, av0, av1, paddle_0, paddle_1, paddle_2, paddle_3,
 				paddle_ena, inpt4, inpt5, pal, tv15khz);

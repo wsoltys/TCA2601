@@ -33,6 +33,7 @@ use ieee.numeric_std.all;
 
 entity A2601NoFlash is
    port (vid_clk: in std_logic;
+         clk : in std_logic;
          audio: out std_logic;
          O_VSYNC: out std_logic;
          O_HSYNC: out std_logic;
@@ -77,6 +78,7 @@ architecture arch of A2601NoFlash is
 
     component A2601 is
     port(vid_clk: in std_logic;
+         clk : in std_logic;
          rst: in std_logic;
          d: inout std_logic_vector(7 downto 0);
          a: out std_logic_vector(12 downto 0);
@@ -206,7 +208,7 @@ architecture arch of A2601NoFlash is
 begin
 	  
 	ms_A2601: A2601
-        port map(vid_clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, 
+        port map(vid_clk, clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, 
 				paddle_0, paddle_1, paddle_2, paddle_3, paddle_ena, 
 				inpt4, inpt5, open, open, vsyn, hsyn, rgbx2, cv, 
 				au0, au1, av0, av1, ph0, ph1, pal, tv15khz);

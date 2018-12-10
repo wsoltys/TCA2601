@@ -548,7 +548,8 @@ use work.TIA_common.all;
 use work.TIA_NTSCLookups.all;
 
 entity TIA is
-    port(vid_clk: in std_logic;       
+    port(vid_clk: in std_logic;
+         clk: in std_logic;
          cs: in std_logic;
          r: in std_logic;
          a: in std_logic_vector(5 downto 0);
@@ -693,7 +694,7 @@ architecture arch of TIA is
     signal hh1: std_logic;
     signal hh1_edge: std_logic;
 
-    signal clk, clkx2: std_logic;
+    --signal clk, clkx2: std_logic;
 
     signal sync: std_logic;
     signal blank: std_logic;
@@ -794,8 +795,8 @@ begin
     end process;
 
     csyn <= (vsync nand hsync) and (vsync or hsync);
---    vsyn <= vsync;
---    hsyn <= hsync;
+    vsyn <= vsync;
+    hsyn <= hsync;
 
     rdy <= '0' when (wsync = '1') else '1';
 
@@ -1230,63 +1231,15 @@ begin
     sync <= hsync xor vsync;
     blank <= hblank or vblank;
 
-    process(vid_clk, vid_clk_dvdr)
-    begin
-        if (vid_clk'event and vid_clk = '1') then
-            vid_clk_dvdr <= vid_clk_dvdr + 1;
-        end if;
-    end process;
-
-    clk <= vid_clk_dvdr(2);
-    -- tv15khz needs half the clock rate
-	 clkx2 <= vid_clk_dvdr(2) when tv15khz='1' else vid_clk_dvdr(1);
-	 
-	Inst_VGA_SCANDBL: work.VGA_SCANDBL PORT MAP(
-		I => int_colu,
-		I_HSYNC => hsync,
-		I_VSYNC => vsync,
-		O => vga_colu,
-		O_HSYNC => hsyn,
-		O_VSYNC => vsyn,
-		CLK => clk,
-		CLK_X2 => clkx2
-	);	
-	
+    vga_colu <= int_colu;
 	Inst_VGAColorTable: work.VGAColorTable PORT MAP(
-		clk => clkx2,
+		clk => vid_clk,
 		lum => '0' & vga_colu(2 downto 0),
 		hue => vga_colu(6 downto 3),
 		mode => '0' & pal,	-- 00 = NTSC, 01 = PAL
 		outColor => rgbx2
 	);	
 		
---      O_VIDEO_R(3 downto 1) <= video_r_x2;
---      O_VIDEO_G(3 downto 1) <= video_g_x2;
---      O_VIDEO_B(3 downto 2) <= video_b_x2;	
---      O_HSYNC   <= hsync_x2;
---      O_VSYNC   <= vsyn;		 
 
---    col_lut_idx <=
---        "0001" & (not vid_clk_dvdr(3)) & vid_clk_dvdr(2) & vid_clk_dvdr(1) & vid_clk_dvdr(0) when (cburst = '1') else
---        int_colu(6 downto 3) & (not vid_clk_dvdr(3)) & vid_clk_dvdr(2) & vid_clk_dvdr(1) & vid_clk_dvdr(0);
---
---    col_lu <= col_lut(to_integer(unsigned(col_lut_idx)));
---    lum_lu <= lum_lut(to_integer(unsigned(int_colu(2 downto 0))));
---
---    -- Composite video output
---    process(vid_clk)
---    begin
---        if (vid_clk'event and vid_clk = '1') then
---            if (sync = '1') then
---                cv <= std_logic_vector(sync_level);
---            elsif (cburst = '1') then
---                cv <= std_logic_vector(blank_level + col_lu);
---            elsif (blank = '1') then
---                cv <= std_logic_vector(blank_level);
---            else
---                cv <= std_logic_vector(lum_lu + col_lu);
---            end if;
---        end if;
---    end process;
 
 end arch;
