@@ -91,6 +91,7 @@ architecture rtl of MA2601 is
   signal p_select: std_logic := '1';
   signal p_color: std_logic := '1';
   signal sc: std_logic := '0';
+  signal force_bs: std_logic_vector(2 downto 0) := "000";
   signal pal: std_logic := '0';
   signal p_dif: std_logic_vector(1 downto 0) := (others => '0');
 
@@ -113,6 +114,7 @@ architecture rtl of MA2601 is
 -- Data IO
   signal downl      : std_logic;
   signal index      : std_logic_vector(7 downto 0);
+  signal file_ext   : std_logic_vector(31 downto 0);
   signal rom_a      : std_logic_vector(14 downto 0);
   signal rom_do     : std_logic_vector(7 downto 0);
   signal rom_size   : std_logic_vector(15 downto 0);
@@ -140,8 +142,8 @@ architecture rtl of MA2601 is
 
   -- config string used by the io controller to fill the OSD
   constant CONF_STR : string :=
-    "MA2601;A26BIN;"&
-    "F,A26BIN,Load SuperChip;"&
+    "MA2601;A26BIN?? ;"&
+    "F,A26BIN?? ,Load SuperChip;"&
     "O1,Video standard,NTSC,PAL;"&
     "O2,Video mode,Color,B&W;"&
     "O3,Difficulty P1,A,B;"&
@@ -194,6 +196,7 @@ architecture rtl of MA2601 is
         downloading: out std_logic;
         size: out std_logic_vector(15 downto 0);
         index: out std_logic_vector(7 downto 0);
+        file_ext: out std_logic_vector(31 downto 0);
         clk: in std_logic;
         we: in std_logic;
         a: in std_logic_vector(14 downto 0);
@@ -300,6 +303,7 @@ begin
       p_select => p_select,
       p_color => p_color,
       sc => sc,
+      force_bs => force_bs,
       rom_a => rom_a,
       rom_do => rom_do,
       rom_size => rom_size,
@@ -462,7 +466,16 @@ begin
     );
 
   data_io_inst: data_io
-        port map(SPI_SCK, SPI_SS2, SPI_DI, downl, rom_size, index, vid_clk, '0', rom_a, (others=>'0'), rom_do);
+        port map(SPI_SCK, SPI_SS2, SPI_DI, downl, rom_size, index, file_ext, vid_clk, '0', rom_a, (others=>'0'), rom_do);
+
+  -- force bank switch type by file extension
+  process (file_ext) begin
+    force_bs <= "000";
+    if    file_ext(23 downto 8) = x"4530" or file_ext(23 downto 8) = x"6530" then force_bs <= "100"; -- E0
+    elsif file_ext(23 downto 8) = x"4645" or file_ext(23 downto 8) = x"6665" then force_bs <= "011"; -- FE
+    elsif file_ext(23 downto 8) = x"3346" or file_ext(23 downto 8) = x"3366" then force_bs <= "101"; -- 3F
+    end if;
+  end process;
 
   keyboard : entity work.ps2Keyboard
     port map (vid_clk, '0', ps2Clk, ps2data, ps2_scancode);

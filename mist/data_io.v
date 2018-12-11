@@ -29,6 +29,7 @@ module data_io (
 	output reg        downloading,   // signal indicating an active download
 	output reg [15:0] size,          // number of bytes in input buffer
     output reg  [7:0] index,
+    output reg [31:0] file_ext,
 	
 	// cpu ram interface
 	input 			clk,
@@ -50,6 +51,7 @@ reg [6:0]      sbuf;
 reg [7:0]      cmd /* synthesis noprune */;
 reg [7:0]      data /* synthesis noprune */;
 reg [4:0]      cnt /* synthesis noprune */;
+reg [4:0]      bcnt;
 
 reg [15:0]     addr /* synthesis noprune */;
 reg rclk /* synthesis noprune */;
@@ -57,15 +59,17 @@ reg rclk /* synthesis noprune */;
 localparam UIO_FILE_TX      = 8'h53;
 localparam UIO_FILE_TX_DAT  = 8'h54;
 localparam UIO_FILE_INDEX   = 8'h55;
+localparam UIO_FILE_INFO    = 8'h56;
 
 reg        downloading_reg = 1'b0;
 reg  [7:0] index_reg = 7'b0;
-
+reg [31:0] file_ext_reg;
 // data_io has its own SPI interface to the io controller
 always@(posedge sck, posedge ss) begin
-	if(ss == 1'b1)
-		cnt <= 5'd0;
-	else begin
+	if(ss == 1'b1) begin
+		cnt <= 0;
+        bcnt <= 0;
+	end else begin
 		rclk <= 1'b0;
 
 		// don't shift in last bit. It is evaluated directly
@@ -84,6 +88,14 @@ always@(posedge sck, posedge ss) begin
 		// finished command byte
 		if(cnt == 7)
 			cmd <= {sbuf, sdi};
+
+		if((cmd == UIO_FILE_INFO) && (cnt == 15)) begin
+			if(~&bcnt) bcnt <= bcnt + 1'd1;
+			if(bcnt == 7)  file_ext_reg[31:24] <= ".";
+			if(bcnt == 8)  file_ext_reg[23:16] <= {sbuf, sdi};
+			if(bcnt == 9)  file_ext_reg[15:8]  <= {sbuf, sdi};
+			if(bcnt == 10) file_ext_reg[7:0]   <= {sbuf, sdi};
+		end
 
 		// prepare/end transmission
 		if((cmd == UIO_FILE_TX) && (cnt == 15)) begin
@@ -111,6 +123,7 @@ always@(posedge clk) begin
     index <= index_reg;
     downloading <= downloading_reg;
     size <= addr;
+    file_ext <= file_ext_reg;
 end
 
 // include the embedded dual port ram

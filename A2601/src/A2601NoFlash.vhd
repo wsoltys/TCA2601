@@ -64,6 +64,7 @@ entity A2601NoFlash is
          p_select: in std_logic;
          p_color: in std_logic;
          sc: in std_logic; --SuperChip enable
+         force_bs: in std_logic_vector(2 downto 0); -- forced bank switch type
          rom_a: out std_logic_vector(14 downto 0);
          rom_do: in std_logic_vector(7 downto 0);
          rom_size: in std_logic_vector(15 downto 0);
@@ -365,9 +366,11 @@ begin
     end process;
 
 	 -- derive banking scheme from cartridge size
-    process(rom_size)
+    process(rom_size, force_bs)
     begin
-      if(rom_size <= x"1000") then    -- 4k and less
+      if(force_bs /= "000") then
+        bss <= force_bs;
+      elsif(rom_size <= x"1000") then    -- 4k and less
         bss <= BANK00;
       elsif(rom_size <= x"2000") then -- 8k and less
         bss <= BANKF8;
