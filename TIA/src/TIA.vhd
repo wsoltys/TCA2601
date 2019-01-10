@@ -230,30 +230,6 @@ end player;
 
 architecture arch of player is 
 
-    component cntr2 is
-        port(clk: in std_logic;
-              rst: in std_logic;
-              en: in std_logic;
-              o: out std_logic_vector(1 downto 0)
-             );
-    end component;
-
-    component cntr3 is
-        port(clk: in std_logic;
-             rst: in std_logic;
-              en: in std_logic;
-              o: out std_logic_vector(2 downto 0)
-             );
-    end component;
-    
-    component lfsr6 is
-        port(clk: in std_logic;
-              prst: in std_logic;
-              cnt: in std_logic;
-              o: out std_logic_vector(5 downto 0)
-             );
-    end component;
-
     signal lfsr_out: std_logic_vector(5 downto 0);
     signal lfsr_rst: std_logic;
     signal lfsr_cnt: std_logic;
@@ -279,9 +255,9 @@ architecture arch of player is
 
 begin
 
-    lfsr: lfsr6 port map(clk, lfsr_rst, lfsr_cnt, lfsr_out);
-    cntr: cntr2 port map(clk, cntr_rst, cntr_en, cntr_out);
-    scan: cntr3 port map(clk, '0', scan_cnt, scan_out); 
+    lfsr: work.lfsr6 port map(clk, lfsr_rst, lfsr_cnt, lfsr_out);
+    cntr: work.cntr2 port map(clk, cntr_rst, cntr_en, cntr_out);
+    scan: work.cntr3 port map(clk, '0', scan_cnt, scan_out); 
 
     ph0 <= '1' when (cntr_out = "00") else '0';
     ph1_edge <= '1' when (cntr_out = "10") else '0';
@@ -363,22 +339,6 @@ end missile;
 
 architecture arch of missile is 
 
-    component cntr2 is
-        port(clk: in std_logic;
-              rst: in std_logic;
-              en: in std_logic;           
-              o: out std_logic_vector(1 downto 0)
-             );
-    end component;
-
-    component lfsr6 is
-        port(clk: in std_logic;
-              prst: in std_logic;
-              cnt: in std_logic;
-              o: out std_logic_vector(5 downto 0)
-             );
-    end component;
-    
     signal lfsr_out: std_logic_vector(5 downto 0);
     signal lfsr_rst: std_logic;
     signal lfsr_cnt: std_logic;
@@ -395,8 +355,8 @@ architecture arch of missile is
     
 begin
 
-    lfsr: lfsr6 port map(clk, lfsr_rst, lfsr_cnt, lfsr_out);
-    cntr: cntr2 port map(clk, cntr_rst, cntr_en, cntr_out); 
+    lfsr: work.lfsr6 port map(clk, lfsr_rst, lfsr_cnt, lfsr_out);
+    cntr: work.cntr2 port map(clk, cntr_rst, cntr_en, cntr_out); 
         
     ph1_edge <= '1' when (cntr_out = "10") else '0';
     ph1 <= '1' when (cntr_out = "11") else '0';
@@ -489,22 +449,6 @@ end ball;
 
 architecture arch of ball is 
 
-    component cntr2 is
-        port(clk: in std_logic;
-              rst: in std_logic;
-              en: in std_logic;           
-              o: out std_logic_vector(1 downto 0)
-             );
-    end component;
-
-    component lfsr6 is
-        port(clk: in std_logic;           
-              prst: in std_logic;
-              cnt: in std_logic;
-              o: out std_logic_vector(5 downto 0)
-             );
-    end component;
-    
     signal lfsr_out: std_logic_vector(5 downto 0);
     signal lfsr_rst: std_logic;
     signal lfsr_cnt: std_logic;
@@ -522,8 +466,8 @@ architecture arch of ball is
     
 begin
 
-    lfsr: lfsr6 port map(clk, lfsr_rst, lfsr_cnt, lfsr_out);
-    cntr: cntr2 port map(clk, cntr_rst, cntr_en, cntr_out);
+    lfsr: work.lfsr6 port map(clk, lfsr_rst, lfsr_cnt, lfsr_out);
+    cntr: work.cntr2 port map(clk, cntr_rst, cntr_en, cntr_out);
     
     ph1_edge <= '1' when (cntr_out = "10") else '0';
     ph1 <= '1' when (cntr_out = "11") else '0';
@@ -604,7 +548,8 @@ use work.TIA_common.all;
 use work.TIA_NTSCLookups.all;
 
 entity TIA is
-    port(vid_clk: in std_logic;       
+    port(vid_clk: in std_logic;
+         clk: in std_logic;
          cs: in std_logic;
          r: in std_logic;
          a: in std_logic_vector(5 downto 0);
@@ -635,105 +580,6 @@ entity TIA is
 end TIA;
 
 architecture arch of TIA is
-
-	COMPONENT VGA_SCANDBL
-	PORT(
-		I : IN std_logic_vector(6 downto 0);
-		I_HSYNC : IN std_logic;
-		I_VSYNC : IN std_logic;
-		CLK : IN std_logic;
-		CLK_X2 : IN std_logic;          
-		O : OUT std_logic_vector(6 downto 0);
-		O_HSYNC : OUT std_logic;
-		O_VSYNC : OUT std_logic
-		);
-	END COMPONENT;	
-	
-	COMPONENT VGAColorTable
-	PORT(
-		clk : IN std_logic;
-		lum : IN std_logic_vector(3 downto 0);
-		hue : IN std_logic_vector(3 downto 0);
-		mode : IN std_logic_vector(1 downto 0);          
-		outColor : OUT std_logic_vector(23 downto 0)
-		);
-	END COMPONENT;	
-
-    component cntr2 is
-        port(clk: in std_logic;
-             rst: in std_logic;
-             en: in std_logic;
-             o: out std_logic_vector(1 downto 0)
-            );
-    end component;
-
-    component lfsr6 is
-        port(clk: in std_logic;
-              prst: in std_logic;
-              cnt: in std_logic;
-              o: out std_logic_vector(5 downto 0)
-             );
-    end component;
-
-    component audio is
-        port(clk: in std_logic;
-             cnt: in std_logic;
-             freq: in std_logic_vector(4 downto 0);
-             ctrl: in std_logic_vector(3 downto 0);
-             ao: out std_logic
-            );
-    end component;
-
-    component player is
-        port(clk: in std_logic;
-             prst: in std_logic;
-             count: in std_logic;
-             nusiz: in std_logic_vector(2 downto 0);
-             reflect: in std_logic;
-             grpnew: in std_logic_vector(7 downto 0);
-             grpold: in std_logic_vector(7 downto 0);
-             vdel: in std_logic;
-             pix: out std_logic
-            );
-    end component;
-
-    component missile is
-        port(clk: in std_logic;
-              prst: in std_logic;
-              count: in std_logic;
-              enable: in std_logic;
-              nusiz: in std_logic_vector(2 downto 0);
-              size: in std_logic_vector(1 downto 0);
-              pix: out std_logic
-             );
-    end component;
-
-    component ball is
-        port(clk: in std_logic;
-             prst: in std_logic;
-             count: in std_logic;
-             ennew: in std_logic;
-             enold: in std_logic;
-             vdel: in std_logic;
-             size: in std_logic_vector(1 downto 0);
-             pix: out std_logic
-            );
-    end component;
-
-    component mux20 is
-        port(i: in std_logic_vector(19 downto 0);
-             a: in std_logic_vector(4 downto 0);
-             o: out std_logic
-            );
-    end component;
-
-	 component paddle is
-			port(clk: in std_logic;
-				  value: in std_logic_vector(7 downto 0);
-				  rst: in std_logic;       
-				  o: out std_logic
-			);
-    end component;
 
     signal h_lfsr_out: std_logic_vector(5 downto 0);
     signal h_lfsr_rst: std_logic;
@@ -848,7 +694,7 @@ architecture arch of TIA is
     signal hh1: std_logic;
     signal hh1_edge: std_logic;
 
-    signal clk, clkx2: std_logic;
+    --signal clk, clkx2: std_logic;
 
     signal sync: std_logic;
     signal blank: std_logic;
@@ -858,7 +704,7 @@ architecture arch of TIA is
     signal col_lut_idx: std_logic_vector(7 downto 0);
     signal col_lu: unsigned(7 downto 0);
 
-    signal vid_clk_dvdr: unsigned(3 downto 0) := "0000";
+    signal vid_clk_dvdr: unsigned(2 downto 0) := "000";
 	 
 	  signal vga_colu: std_logic_vector(6 downto 0);
 
@@ -869,22 +715,22 @@ architecture arch of TIA is
 	  signal inpt3: std_logic;
 
 begin
-    paddle0: paddle port map(hsync, paddle_0, inpt03_chg, inpt0);
-    paddle1: paddle port map(hsync, paddle_1, inpt03_chg, inpt1);
-    paddle2: paddle port map(hsync, paddle_2, inpt03_chg, inpt2);
-    paddle3: paddle port map(hsync, paddle_3, inpt03_chg, inpt3);
+    paddle0: work.paddle port map(hsync, paddle_0, inpt03_chg, inpt0);
+    paddle1: work.paddle port map(hsync, paddle_1, inpt03_chg, inpt1);
+    paddle2: work.paddle port map(hsync, paddle_2, inpt03_chg, inpt2);
+    paddle3: work.paddle port map(hsync, paddle_3, inpt03_chg, inpt3);
 
-    h_cntr: cntr2 port map(clk, h_cntr_rst, '1', h_cntr_out);
-    lfsr: lfsr6 port map(clk, h_lfsr_rst, h_lfsr_cnt, h_lfsr_out);
-    pf_mux: mux20 port map(pf_gr, std_logic_vector(pf_adr), pf_mux_out);
+    h_cntr: work.cntr2 port map(clk, h_cntr_rst, '1', h_cntr_out);
+    lfsr: work.lfsr6 port map(clk, h_lfsr_rst, h_lfsr_cnt, h_lfsr_out);
+    pf_mux: work.mux20 port map(pf_gr, std_logic_vector(pf_adr), pf_mux_out);
 
     hh0_edge <= '1' when (h_cntr_out = "01") else '0';
     hh0 <= '1' when (h_cntr_out = "00") else '0';
     hh1_edge <= '1' when (h_cntr_out = "10") else '0';
     hh1 <= '1' when (h_cntr_out = "11") else '0';
 
-    aud0: audio port map(clk, au_cnt, a0_freq, a0_ctrl, au0);
-    aud1: audio port map(clk, au_cnt, a1_freq, a1_ctrl, au1);
+    aud0: work.audio port map(clk, au_cnt, a0_freq, a0_ctrl, au0);
+    aud1: work.audio port map(clk, au_cnt, a1_freq, a1_ctrl, au1);
 
     av0 <= a0_vol;
     av1 <= a1_vol;
@@ -949,26 +795,26 @@ begin
     end process;
 
     csyn <= (vsync nand hsync) and (vsync or hsync);
---    vsyn <= vsync;
---    hsyn <= hsync;
+    vsyn <= vsync;
+    hsyn <= hsync;
 
     rdy <= '0' when (wsync = '1') else '1';
 
-    p0: player
+    p0: work.player
         port map(clk, p0_rst, p0_count, p0_nusiz, p0_reflect,
                     p0_grpnew, p0_grpold, p0_vdel, p0_pix);
 
-    p1: player
+    p1: work.player
         port map(clk, p1_rst, p1_count, p1_nusiz, p1_reflect,
                     p1_grpnew, p1_grpold, p1_vdel, p1_pix);
 
-    m0: missile
+    m0: work.missile
         port map(clk, m0_rst, m0_count, m0_enable, p0_nusiz, m0_size, m0_pix);
 
-    m1: missile
+    m1: work.missile
         port map(clk, m1_rst, m1_count, m1_enable, p1_nusiz, m1_size, m1_pix);
 
-    bl: ball
+    bl: work.ball
         port map(clk, bl_rst, bl_count, bl_ennew, bl_enold, bl_vdel, bl_size, bl_pix);
 
     pf_output: process(clk, h_lfsr_cnt)
@@ -1385,63 +1231,15 @@ begin
     sync <= hsync xor vsync;
     blank <= hblank or vblank;
 
-    process(vid_clk, vid_clk_dvdr)
-    begin
-        if (vid_clk'event and vid_clk = '1') then
-            vid_clk_dvdr <= vid_clk_dvdr + 1;
-        end if;
-    end process;
-
-    clk <= vid_clk_dvdr(3);
-    -- tv15khz needs half the clock rate
-	 clkx2 <= vid_clk_dvdr(3) when tv15khz='1' else vid_clk_dvdr(2);
-	 
-	Inst_VGA_SCANDBL: VGA_SCANDBL PORT MAP(
-		I => int_colu,
-		I_HSYNC => hsync,
-		I_VSYNC => vsync,
-		O => vga_colu,
-		O_HSYNC => hsyn,
-		O_VSYNC => vsyn,
-		CLK => clk,
-		CLK_X2 => clkx2
-	);	
-	
-	Inst_VGAColorTable: VGAColorTable PORT MAP(
-		clk => clkx2,
+    vga_colu <= int_colu;
+	Inst_VGAColorTable: work.VGAColorTable PORT MAP(
+		clk => vid_clk,
 		lum => '0' & vga_colu(2 downto 0),
 		hue => vga_colu(6 downto 3),
 		mode => '0' & pal,	-- 00 = NTSC, 01 = PAL
 		outColor => rgbx2
 	);	
 		
---      O_VIDEO_R(3 downto 1) <= video_r_x2;
---      O_VIDEO_G(3 downto 1) <= video_g_x2;
---      O_VIDEO_B(3 downto 2) <= video_b_x2;	
---      O_HSYNC   <= hsync_x2;
---      O_VSYNC   <= vsyn;		 
 
-    col_lut_idx <=
-        "0001" & (not vid_clk_dvdr(3)) & vid_clk_dvdr(2) & vid_clk_dvdr(1) & vid_clk_dvdr(0) when (cburst = '1') else
-        int_colu(6 downto 3) & (not vid_clk_dvdr(3)) & vid_clk_dvdr(2) & vid_clk_dvdr(1) & vid_clk_dvdr(0);
-
-    col_lu <= col_lut(to_integer(unsigned(col_lut_idx)));
-    lum_lu <= lum_lut(to_integer(unsigned(int_colu(2 downto 0))));
-
-    -- Composite video output
-    process(vid_clk)
-    begin
-        if (vid_clk'event and vid_clk = '1') then
-            if (sync = '1') then
-                cv <= std_logic_vector(sync_level);
-            elsif (cburst = '1') then
-                cv <= std_logic_vector(blank_level + col_lu);
-            elsif (blank = '1') then
-                cv <= std_logic_vector(blank_level);
-            else
-                cv <= std_logic_vector(lum_lu + col_lu);
-            end if;
-        end if;
-    end process;
 
 end arch;

@@ -8,11 +8,16 @@ Buttons:
 - Keyboard F12      -> OSD to select roms from the sd card (needs extension .a26)
 
 Current limitations:
-- supports only the common Atari bank switching schemes
-- no illegal opcodes
+- Supports only the common Atari bank switching schemes (F4, F6, F8, E0, 3F, FE)
+- No illegal opcodes
+- F4, F6, F8 bank switch types are auto-detected by the ROM file size. E0, 3F, FE
+  is auto-detected by the file extension, e.g. revenge_of_monezuma.e0 or
+  decathlon.fe will work
+
 
 Supports mist.ini "scandouble_disable" for RGB 15khz output, or just hold the 
-middle MiST button to switch between modes.
+middle MiST button to switch between modes. Also support YPbPr output via the
+ypbpr=1 mist.ini optioon.
 
 All MiST related files including the Quartus project files are in the 'mist' subdirectory.
 

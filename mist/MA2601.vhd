@@ -64,8 +64,8 @@ end entity;
 architecture rtl of MA2601 is
 
 -- System clocks
-  signal vid_clk: std_logic := '0';
-  signal osd_clk : std_logic := '0';
+  signal vid_clk: std_logic := '0'; -- 28 MHz
+  signal clk : std_logic; -- 3.5 MHz
 
 -- A2601
   signal audio: std_logic := '0';
@@ -90,9 +90,10 @@ architecture rtl of MA2601 is
   signal p_start: std_logic := '1';
   signal p_select: std_logic := '1';
   signal p_color: std_logic := '1';
+  signal sc: std_logic := '0';
+  signal force_bs: std_logic_vector(2 downto 0) := "000";
   signal pal: std_logic := '0';
   signal p_dif: std_logic_vector(1 downto 0) := (others => '0');
-  signal tv15khz: std_logic := '0';
 
 -- User IO
   signal switches   : std_logic_vector(1 downto 0);
@@ -101,21 +102,54 @@ architecture rtl of MA2601 is
   signal joy1       : std_logic_vector(7 downto 0);
   signal joy_a_0    : std_logic_vector(15 downto 0);
   signal joy_a_1    : std_logic_vector(15 downto 0);
-  signal status     : std_logic_vector(7 downto 0);
+  signal status     : std_logic_vector(31 downto 0);
   signal ascii_new  : std_logic;
   signal ascii_code : STD_LOGIC_VECTOR(6 DOWNTO 0);
-  signal clk12k     : std_logic;
   signal ps2Clk     : std_logic;
   signal ps2Data    : std_logic;
   signal ps2_scancode : std_logic_vector(7 downto 0);
   signal scandoubler_disable : std_logic;
+  signal ypbpr      : std_logic;
 
-  signal vga_vsync_i : std_logic;
-  signal vga_hsync_i : std_logic;
+-- Data IO
+  signal downl      : std_logic;
+  signal index      : std_logic_vector(7 downto 0);
+  signal file_ext   : std_logic_vector(31 downto 0);
+  signal rom_a      : std_logic_vector(14 downto 0);
+  signal rom_do     : std_logic_vector(7 downto 0);
+  signal rom_size   : std_logic_vector(15 downto 0);
 
-  
+-- Video 
+  signal sd_r         : std_logic_vector(5 downto 0);
+  signal sd_g         : std_logic_vector(5 downto 0);
+  signal sd_b         : std_logic_vector(5 downto 0);
+  signal sd_hs        : std_logic;
+  signal sd_vs        : std_logic;
+
+  signal osd_red_i    : std_logic_vector(5 downto 0);
+  signal osd_green_i  : std_logic_vector(5 downto 0);
+  signal osd_blue_i   : std_logic_vector(5 downto 0);
+  signal osd_vs_i     : std_logic;
+  signal osd_hs_i     : std_logic;
+  signal osd_red_o    : std_logic_vector(5 downto 0);
+  signal osd_green_o  : std_logic_vector(5 downto 0);
+  signal osd_blue_o   : std_logic_vector(5 downto 0);
+  signal vga_y_o      : std_logic_vector(5 downto 0);
+  signal vga_pb_o     : std_logic_vector(5 downto 0);
+  signal vga_pr_o     : std_logic_vector(5 downto 0);
+  signal vga_vsync_i  : std_logic;
+  signal vga_hsync_i  : std_logic;
+
   -- config string used by the io controller to fill the OSD
-  constant CONF_STR : string := "MA2601;A26;O1,Video standard,NTSC,PAL;O2,Video mode,Color,B&W;O3,Difficulty P1,A,B;O4,Difficulty P2,A,B;O5,Controller,Joystick,Paddle;O6,Enable Scanlines,no,yes;";
+  constant CONF_STR : string :=
+    "MA2601;A26BIN?? ;"&
+    "F,A26BIN?? ,Load SuperChip;"&
+    "O1,Video standard,NTSC,PAL;"&
+    "O2,Video mode,Color,B&W;"&
+    "O3,Difficulty P1,A,B;"&
+    "O4,Difficulty P2,A,B;"&
+    "O5,Controller,Joystick,Paddle;"&
+    "O67,Scanlines,Off,25%,50%,75%;";
 
   function to_slv(s: string) return std_logic_vector is
     constant ss: string(1 to s'length) := s;
@@ -136,32 +170,90 @@ architecture rtl of MA2601 is
   component user_io
 	 generic ( STRLEN : integer := 0 );
     port (
+      clk_sys: in std_logic;
       SPI_CLK, SPI_SS_IO, SPI_MOSI :in std_logic;
       SPI_MISO : out std_logic;
       conf_str : in std_logic_vector(8*STRLEN-1 downto 0);
       switches : out std_logic_vector(1 downto 0);
       buttons : out std_logic_vector(1 downto 0);
       scandoubler_disable : out std_logic;
+      ypbpr : out std_logic;
       joystick_0 : out std_logic_vector(7 downto 0);
       joystick_1 : out std_logic_vector(7 downto 0);
       joystick_analog_0 : out std_logic_vector(15 downto 0);
       joystick_analog_1 : out std_logic_vector(15 downto 0);
-      status : out std_logic_vector(7 downto 0);
+      status : out std_logic_vector(31 downto 0);
       sd_sdhc : in std_logic;
-      ps2_clk : in std_logic;
       ps2_kbd_clk : out std_logic;
       ps2_kbd_data : out std_logic
     );
   end component user_io;
 
-  component osd
+  component data_io is
+    port(sck: in std_logic;
+        ss: in std_logic;
+        sdi: in std_logic;
+        downloading: out std_logic;
+        size: out std_logic_vector(15 downto 0);
+        index: out std_logic_vector(7 downto 0);
+        file_ext: out std_logic_vector(31 downto 0);
+        clk: in std_logic;
+        we: in std_logic;
+        a: in std_logic_vector(14 downto 0);
+        din: in std_logic_vector(7 downto 0);
+        dout: out std_logic_vector(7 downto 0));
+    end component;
+
+  component scandoubler
     port (
-      pclk, sck, ss, sdi, hs_in, vs_in, scanline_ena_h : in std_logic;
-      red_in, blue_in, green_in : in std_logic_vector(5 downto 0);
-      red_out, blue_out, green_out : out std_logic_vector(5 downto 0);
-      hs_out, vs_out : out std_logic
-    );
-  end component osd;
+            clk_sys     : in std_logic;
+            scanlines   : in std_logic_vector(1 downto 0);
+
+            hs_in       : in std_logic;
+            vs_in       : in std_logic;
+            r_in        : in std_logic_vector(5 downto 0);
+            g_in        : in std_logic_vector(5 downto 0);
+            b_in        : in std_logic_vector(5 downto 0);
+      
+            hs_out      : out std_logic;
+            vs_out      : out std_logic;
+            r_out       : out std_logic_vector(5 downto 0);
+            g_out       : out std_logic_vector(5 downto 0);
+            b_out       : out std_logic_vector(5 downto 0)
+        );
+  end component scandoubler;
+
+  component osd
+         generic ( OSD_COLOR : integer := 1 );  -- blue
+    port (  clk_sys     : in std_logic;
+        
+            R_in        : in std_logic_vector(5 downto 0);
+            G_in        : in std_logic_vector(5 downto 0);
+            B_in        : in std_logic_vector(5 downto 0);
+            HSync       : in std_logic;
+            VSync       : in std_logic;
+
+            R_out       : out std_logic_vector(5 downto 0);
+            G_out       : out std_logic_vector(5 downto 0);
+            B_out       : out std_logic_vector(5 downto 0);
+        
+            SPI_SCK     : in std_logic;
+            SPI_SS3     : in std_logic;
+            SPI_DI      : in std_logic
+        );
+    end component osd;
+        
+  COMPONENT rgb2ypbpr
+        PORT
+        (
+        red     :        IN std_logic_vector(5 DOWNTO 0);
+        green   :        IN std_logic_vector(5 DOWNTO 0);
+        blue    :        IN std_logic_vector(5 DOWNTO 0);
+        y       :        OUT std_logic_vector(5 DOWNTO 0);
+        pb      :        OUT std_logic_vector(5 DOWNTO 0);
+        pr      :        OUT std_logic_vector(5 DOWNTO 0)
+        );
+  END COMPONENT;
 
 begin
 
@@ -170,18 +262,19 @@ begin
 -- -----------------------------------------------------------------------
 
   SDRAM_nCAS <= '1'; -- disable ram
-  res <= status(0);
+  res <= status(0) or buttons(1) or downl;
   p_color <= not status(2);
   pal <= status(1);
   p_dif(0) <= not status(3);
   p_dif(1) <= not status(4);
-
+  sc <= index(1); -- 2nd menu index - load with SuperChip support
 -- -----------------------------------------------------------------------
 -- A2601 core
 -- -----------------------------------------------------------------------
   a2601Instance : entity work.A2601NoFlash
     port map (
       vid_clk => vid_clk,
+      clk => clk,
       audio => audio,
       O_VSYNC => O_VSYNC,
       O_HSYNC => O_HSYNC,
@@ -209,42 +302,82 @@ begin
       p_start => p_start,
       p_select => p_select,
       p_color => p_color,
-      sdi => SPI_DI,
-      sck => SPI_SCK,
-      ss2 => SPI_SS2,
+      sc => sc,
+      force_bs => force_bs,
+      rom_a => rom_a,
+      rom_do => rom_do,
+      rom_size => rom_size,
       pal => pal,
       p_dif => p_dif,
-      tv15khz => tv15khz
+      tv15khz => '1'
     );
 
-  -- A2601 -> OSD
-  osd_inst : osd
+  scandoubler_inst: scandoubler
     port map (
-      pclk => osd_clk,
-      sdi => SPI_DI,
-      sck => SPI_SCK,
-      ss => SPI_SS3,
-      red_in => O_VIDEO_R,
-      green_in => O_VIDEO_G,
-      blue_in => O_VIDEO_B,
-      hs_in => not O_HSYNC,
-      vs_in => not O_VSYNC,
-      scanline_ena_h => status(6),
-      red_out => VGA_R,
-      green_out => VGA_G,
-      blue_out => VGA_B,
-      hs_out => vga_hsync_i,
-      vs_out => vga_vsync_i
+        clk_sys     => vid_clk,
+        scanlines   => status(7 downto 6),
+
+        hs_in       => not O_HSYNC,
+        vs_in       => not O_VSYNC,
+        r_in        => O_VIDEO_R,
+        g_in        => O_VIDEO_G,
+        b_in        => O_VIDEO_B,
+    
+        hs_out      => sd_hs,
+        vs_out      => sd_vs,
+        r_out       => sd_r,
+        g_out       => sd_g,
+        b_out       => sd_b
     );
+
+  osd_inst: osd
+    port map (
+        clk_sys     => vid_clk,
+  
+        SPI_SCK     => SPI_SCK,
+        SPI_SS3     => SPI_SS3,
+        SPI_DI      => SPI_DI,
+      
+        R_in        => osd_red_i,
+        G_in        => osd_green_i,
+        B_in        => osd_blue_i,
+        HSync       => osd_hs_i,
+        VSync       => osd_vs_i,
+      
+        R_out       => osd_red_o,
+        G_out       => osd_green_o,
+        B_out       => osd_blue_o
+    );
+
+--
+  rgb2component: component rgb2ypbpr
+        port map
+        (
+           red => osd_red_o,
+           green => osd_green_o,
+           blue => osd_blue_o,
+           y => vga_y_o,
+           pb => vga_pb_o,
+           pr => vga_pr_o
+        );
+
 
   AUDIO_L <= audio;
   AUDIO_R <= audio;
 
   -- Create composite sync and high vsync if using tv15khz.
-  VGA_HS <= not (vga_hsync_i xor vga_vsync_i) when tv15khz='1' else vga_hsync_i;
-  VGA_VS <= '1' when tv15khz='1' else vga_vsync_i;
+  osd_red_i   <= O_VIDEO_R when scandoubler_disable = '1' else sd_r;
+  osd_green_i <= O_VIDEO_G when scandoubler_disable = '1' else sd_g;
+  osd_blue_i  <= O_VIDEO_B when scandoubler_disable = '1' else sd_b;
+  osd_hs_i    <= O_HSYNC when scandoubler_disable = '1' else sd_hs;
+  osd_vs_i    <= O_VSYNC when scandoubler_disable = '1' else sd_vs;
 
-	 
+  -- If 15kHz Video - composite sync to VGA_HS and VGA_VS high for MiST RGB cable
+  VGA_HS <= not (O_HSYNC xor O_VSYNC) when scandoubler_disable='1' else not (sd_hs xor sd_vs) when ypbpr='1' else sd_hs;
+  VGA_VS <= '1' when scandoubler_disable='1' or ypbpr='1' else sd_vs;
+  VGA_R <= vga_pr_o when ypbpr='1' else osd_red_o;
+  VGA_G <= vga_y_o  when ypbpr='1' else osd_green_o;
+  VGA_B <= vga_pb_o when ypbpr='1' else osd_blue_o;
 
   -- 9 pin d-sub joystick pinout:
   -- pin 1: up
@@ -301,18 +434,8 @@ begin
     port map (
       inclk0 => CLOCK_27(0),
       c0 => vid_clk,
-      c1 => clk12k,
+      c1 => clk,
       locked => open
-    );
-
-  pllosd : entity work.clk_div
-    generic map (
-      DIVISOR => 4
-    )
-    port map (
-      clk    => vid_clk,
-      reset  => '0',
-      clk_en => osd_clk
     );
 
 -- ------------------------------------------------------------------------
@@ -322,6 +445,7 @@ begin
   user_io_inst : user_io
  	generic map (STRLEN => CONF_STR'length)
    port map (
+      clk_sys => vid_clk,
       SPI_CLK => SPI_SCK,
       SPI_SS_IO => CONF_DATA0,
       SPI_MOSI => SPI_DI,
@@ -329,17 +453,29 @@ begin
 		conf_str => to_slv(CONF_STR),
       switches => switches,
       buttons  => buttons,
-		scandoubler_disable => tv15khz,
+      scandoubler_disable => scandoubler_disable,
+      ypbpr => ypbpr,
       joystick_1 => joy0,
       joystick_0 => joy1,
       joystick_analog_1 => joy_a_0,
       joystick_analog_0 => joy_a_1,
       status => status,
       sd_sdhc => '1',
-      ps2_clk => clk12k,
       ps2_kbd_clk => ps2Clk,
       ps2_kbd_data => ps2Data
     );
+
+  data_io_inst: data_io
+        port map(SPI_SCK, SPI_SS2, SPI_DI, downl, rom_size, index, file_ext, vid_clk, '0', rom_a, (others=>'0'), rom_do);
+
+  -- force bank switch type by file extension
+  process (file_ext) begin
+    force_bs <= "000";
+    if    file_ext(23 downto 8) = x"4530" or file_ext(23 downto 8) = x"6530" then force_bs <= "100"; -- E0
+    elsif file_ext(23 downto 8) = x"4645" or file_ext(23 downto 8) = x"6665" then force_bs <= "011"; -- FE
+    elsif file_ext(23 downto 8) = x"3346" or file_ext(23 downto 8) = x"3366" then force_bs <= "101"; -- 3F
+    end if;
+  end process;
 
   keyboard : entity work.ps2Keyboard
     port map (vid_clk, '0', ps2Clk, ps2data, ps2_scancode);

@@ -33,6 +33,7 @@ use ieee.numeric_std.all;
 
 entity A2601NoFlash is
    port (vid_clk: in std_logic;
+         clk : in std_logic;
          audio: out std_logic;
          O_VSYNC: out std_logic;
          O_HSYNC: out std_logic;
@@ -62,21 +63,23 @@ entity A2601NoFlash is
          p_start: in std_logic;
          p_select: in std_logic;
          p_color: in std_logic;
-			
-         sdi: in std_logic;
-         sck: in std_logic;
-         ss2: in std_logic;
+         sc: in std_logic; --SuperChip enable
+         force_bs: in std_logic_vector(2 downto 0); -- forced bank switch type
+         rom_a: out std_logic_vector(14 downto 0);
+         rom_do: in std_logic_vector(7 downto 0);
+         rom_size: in std_logic_vector(15 downto 0);
+
          pal: in std_logic;
          p_dif: in std_logic_vector(1 downto 0);
          tv15khz: in std_logic
-      
-			);
+    );
 end A2601NoFlash;
 
 architecture arch of A2601NoFlash is
 
     component A2601 is
     port(vid_clk: in std_logic;
+         clk : in std_logic;
          rst: in std_logic;
          d: inout std_logic_vector(7 downto 0);
          a: out std_logic_vector(12 downto 0);
@@ -121,23 +124,8 @@ architecture arch of A2601NoFlash is
              a: in std_logic_vector(6 downto 0));
     end component;
     
-    component data_io is
-        port(sck: in std_logic;
-             ss: in std_logic;
-             sdi: in std_logic;
-             downloading: out std_logic;
-             size: out std_logic_vector(15 downto 0);
-             clk: in std_logic;
-             we: in std_logic;
-             a: in std_logic_vector(14 downto 0);
-             din: in std_logic_vector(7 downto 0);
-             dout: out std_logic_vector(7 downto 0));
-    end component;
-    
-    signal d: std_logic_vector(7 downto 0);
     signal d_ram: std_logic_vector(7 downto 0);
     --signal cpu_d: std_logic_vector(7 downto 0);
-    signal a: std_logic_vector(14 downto 0);
     signal a_ram: std_logic_vector(14 downto 0);
     signal pa: std_logic_vector(7 downto 0);
     signal pb: std_logic_vector(7 downto 0);
@@ -197,16 +185,11 @@ architecture arch of A2601NoFlash is
     constant BANKF4: bss_type := "110";
 
     signal bss: bss_type := BANK00; 	--bank switching method
-    signal sc: std_logic := '0';		--superchip enabled or not
   
-    signal forceReset : std_logic := '0';
-    signal downl : std_logic := '0';
-    signal size : std_logic_vector(15 downto 0) := (others=>'0');
-
 begin
 	  
 	ms_A2601: A2601
-        port map(vid_clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, 
+        port map(vid_clk, clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, 
 				paddle_0, paddle_1, paddle_2, paddle_3, paddle_ena, 
 				inpt4, inpt5, open, open, vsyn, hsyn, rgbx2, cv, 
 				au0, au1, av0, av1, ph0, ph1, pal, tv15khz);
@@ -224,7 +207,7 @@ begin
  process(ph0)
     begin
         if (ph0'event and ph0 = '1') then
-			if res = '1' or forceReset = '1' then
+			if res = '1' then
 			rst <= '1';
 			else
 			rst <= '0';
@@ -281,14 +264,14 @@ begin
     sc_a <= cpu_a(6 downto 0);
 
     -- ROM and SC output
-    process(cpu_a, d, sc_d_out, sc)
+    process(cpu_a, rom_do, sc_d_out, sc)
     begin
         if (cpu_a(12 downto 7) = "100001" and sc = '1') then
             cpu_d <= sc_d_out;
         elsif (cpu_a(12 downto 7) = "100000" and sc = '1') then
             cpu_d <= "ZZZZZZZZ";
         elsif (cpu_a(12) = '1') then
-            cpu_d <= d;
+            cpu_d <= rom_do;
         else
             cpu_d <= "ZZZZZZZZ";
         end if;
@@ -303,7 +286,7 @@ begin
 
     tf_bank <= bank(1 downto 0) when (cpu_a(11) = '0') else "11";
 
-    with bss select a <=
+    with bss select rom_a <=
 		  "000" & cpu_a(11 downto 0) when BANK00,
 		  "00" & bank(0) & cpu_a(11 downto 0) when BANKF8,
 		  '0' & bank(1 downto 0) & cpu_a(11 downto 0) when BANKF6,
@@ -381,38 +364,25 @@ begin
             end if;
         end if;
     end process;
-    
-    process(downl)
-    begin
-      if(downl = '0') then
-        a_ram <= a;
-        d <= d_ram;
-        forceReset <= '0';
-      else
-        a_ram <= a;
-        d <= x"FF";
-        forceReset <= '1';
-      end if;
-    end process;
 
 	 -- derive banking scheme from cartridge size
-    process(size)
+    process(rom_size, force_bs)
     begin
-      if(size <= x"1000") then    -- 4k and less
+      if(force_bs /= "000") then
+        bss <= force_bs;
+      elsif(rom_size <= x"1000") then    -- 4k and less
         bss <= BANK00;
-      elsif(size <= x"2000") then -- 8k and less
+      elsif(rom_size <= x"2000") then -- 8k and less
         bss <= BANKF8;
-      elsif(size <= x"4000") then -- 16k and less
+      elsif(rom_size <= x"4000") then -- 16k and less
         bss <= BANKF6;
-      elsif(size <= x"8000") then -- 32k and less
+      elsif(rom_size <= x"8000") then -- 32k and less
         bss <= BANKF4;
       else
         bss <= BANK00;
       end if;
     end process;
     
-    data_io_inst: data_io
-        port map(sck, ss2, sdi, downl, size, vid_clk, '0', a_ram, (others=>'0'), d_ram);
 
 end arch;
 
