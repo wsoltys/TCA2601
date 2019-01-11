@@ -474,6 +474,7 @@ begin
     if    file_ext(23 downto 8) = x"4530" or file_ext(23 downto 8) = x"6530" then force_bs <= "100"; -- E0
     elsif file_ext(23 downto 8) = x"4645" or file_ext(23 downto 8) = x"6665" then force_bs <= "011"; -- FE
     elsif file_ext(23 downto 8) = x"3346" or file_ext(23 downto 8) = x"3366" then force_bs <= "101"; -- 3F
+    elsif file_ext(23 downto 8) = x"5032" or file_ext(23 downto 8) = x"7032" then force_bs <= "111"; -- P2 (Pitfall II)
     end if;
   end process;
 
