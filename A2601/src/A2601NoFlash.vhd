@@ -168,6 +168,7 @@ architecture arch of A2601NoFlash is
     signal e0_bank0: std_logic_vector(2 downto 0) := "000";
     signal e0_bank1: std_logic_vector(2 downto 0) := "000";
     signal e0_bank2: std_logic_vector(2 downto 0) := "000";
+    signal FE_latch: std_logic;
 
     signal cpu_a: std_logic_vector(12 downto 0);
     signal cpu_d: std_logic_vector(7 downto 0);
@@ -339,11 +340,18 @@ begin
                         elsif (cpu_a = "1" & X"FFB") then
                             bank <= "0111";
                         end if;
+                    -- BANK FE fixed by Victor Trucco - 24/05/2018
                     when BANKFE =>
-                        if (cpu_a = "0" & X"1FE") then
-                            bank <= "0000";
-                        elsif (cpu_a = "1" & X"1FE") then
-                            bank <= "0001";
+                        -- If was latched, check the 5th bit of the data bus for the bank-switch
+                        if FE_latch = '1' then
+                            bank <= "000"& not cpu_d(5);
+                        end if;
+
+                        -- Access at 0x01fe trigger the latch, but on the next cpu cycle
+                        if (cpu_a(12 downto 0) = "0000111111110" ) then -- 0x01FE
+                            FE_latch <= '1';
+                        else
+                            FE_latch <= '0';
                         end if;
                     when BANKE0 =>
                         if (cpu_a(12 downto 4) = "1" & X"FE" and cpu_a(3) = '0') then
