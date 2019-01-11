@@ -569,7 +569,7 @@ entity TIA is
          cv: out std_logic_vector(7 downto 0) := "00000000";
          rdy: out std_logic;
          ph0: out std_logic;
-         ph1: out std_logic;
+         ph2: out std_logic;
          au0: out std_logic;
          au1: out std_logic;
          av0: out std_logic_vector(3 downto 0);
@@ -684,7 +684,8 @@ architecture arch of TIA is
 
     signal clk_dvdr: std_logic_vector(1 downto 0) := "01";
     signal phi0: std_logic := '0';
-    signal phi1: std_logic := '1';
+    signal phi2: std_logic := '1';
+    signal phi2_d: std_logic := '1';
 
     signal inpt45_len: std_logic := '0';
     signal inpt45_rst: std_logic;
@@ -862,7 +863,7 @@ begin
 
     inpt45_rst <= '1' when (a = A_VBLANK) and (r = '0') and (cs = '1') else '0';
 
-    process(clk, phi1, a, d, r, cs, cx, inpt45_len, inpt4_l, inpt4, inpt5_l, inpt5)
+    process(clk, a, d, r, cs, cx, inpt0, inpt1, inpt2, inpt3, inpt45_len, inpt4_l, inpt4, inpt5_l, inpt5, paddle_ena)
     begin
         if (r = '1') and (cs = '1') then
             d(5 downto 0) <= "000000";
@@ -936,8 +937,9 @@ begin
             d <= "ZZZZZZZZ";
         end if;
 
-        if (phi1'event and phi1 = '0') then
-            if (r = '0') and (cs = '1') then
+        if (clk'event and clk = '1') then
+            phi2_d <= phi2;
+            if (r = '0') and (cs = '1') and (phi2_d = '0' and phi2 = '1') then
                 case a is
                     when A_VSYNC =>
                         vsync <= d(1);
@@ -1188,29 +1190,26 @@ begin
     end process;
 
     ph0 <= phi0;
-    ph1 <= phi1;
+    ph2 <= phi2;
 
     process(clk)
     begin
         if (clk'event and clk = '1') then
+            phi2<=phi0;
             if (h_lfsr_out = "010100" and hh1_edge = '1') then
                 clk_dvdr <= "01";
                 phi0 <= '0';
-                phi1 <= '0';
             else
                 case clk_dvdr is
                     when "00" =>
                         clk_dvdr <= "01";
                         phi0 <= '0';
-                        phi1 <= '1';
                     when "01" =>
                         clk_dvdr <= "11";
                         phi0 <= '0';
-                        phi1 <= '0';
                     when "11" =>
                         clk_dvdr <= "00";
                         phi0 <= '1';
-                        phi1 <= '1';
                     when others =>
                         null;
                 end case;

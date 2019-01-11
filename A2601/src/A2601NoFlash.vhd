@@ -104,7 +104,7 @@ architecture arch of A2601NoFlash is
          av0: out std_logic_vector(3 downto 0);
          av1: out std_logic_vector(3 downto 0);
          ph0_out: out std_logic;
-         ph1_out: out std_logic;
+         ph2_out: out std_logic;
          pal: in std_logic;
          tv15khz: in std_logic);
     end component;
@@ -143,7 +143,7 @@ architecture arch of A2601NoFlash is
     signal sys_clk_dvdr: unsigned(4 downto 0) := "00000";
 
     signal ph0: std_logic;
-    signal ph1: std_logic;
+    signal ph2: std_logic;
 	 
     signal rgbx2: std_logic_vector(23 downto 0);
     signal hsyn: std_logic;
@@ -192,7 +192,7 @@ begin
         port map(vid_clk, clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, 
 				paddle_0, paddle_1, paddle_2, paddle_3, paddle_ena, 
 				inpt4, inpt5, open, open, vsyn, hsyn, rgbx2, cv, 
-				au0, au1, av0, av1, ph0, ph1, pal, tv15khz);
+				au0, au1, av0, av1, ph0, ph2, pal, tv15khz);
 	
 	dac_inst: dac 
 		port map(audio, au, vid_clk, '0');	
@@ -257,8 +257,7 @@ begin
     sc_ram128x8: ram128x8
         port map(sc_clk, sc_r, sc_d_in, sc_d_out, sc_a);
 
-    -- This clock is phase shifted so that we can use Xilinx synchronous block RAM.
-    sc_clk <= not ph1;
+    sc_clk <= clk;
     sc_r <= '0' when cpu_a(12 downto 7) = "100000" else '1';
     sc_d_in <= cpu_d;
     sc_a <= cpu_a(6 downto 0);

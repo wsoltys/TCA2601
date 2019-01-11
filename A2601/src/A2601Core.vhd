@@ -47,7 +47,7 @@ entity A2601 is
          av0: out std_logic_vector(3 downto 0);
          av1: out std_logic_vector(3 downto 0);
          ph0_out: out std_logic;
-         ph1_out: out std_logic;
+         ph2_out: out std_logic;
          pal: in std_logic;
          tv15khz: in std_logic);
 end A2601;
@@ -69,6 +69,7 @@ architecture arch of A2601 is
 
     component A6532 is
         port(clk: in std_logic;
+             ph2: in std_logic;
              r: in std_logic;
              rs: in std_logic;
              cs: in std_logic;
@@ -95,7 +96,7 @@ architecture arch of A2601 is
              cv: out std_logic_vector(7 downto 0);
              rdy: out std_logic;
              ph0: out std_logic;
-             ph1: out std_logic;
+             ph2: out std_logic;
              au0: out std_logic;
              au1: out std_logic;
              av0: out std_logic_vector(3 downto 0);
@@ -122,11 +123,11 @@ architecture arch of A2601 is
     signal tia_cs: std_logic;
     signal tia_a: std_logic_vector(5 downto 0);
     signal ph0: std_logic;
-    signal ph1: std_logic;	 
+    signal ph2: std_logic;
 begin
 
     ph0_out <= ph0;
-    ph1_out <= ph1;
+    ph2_out <= ph2;
 
     r <= read;
 
@@ -134,12 +135,12 @@ begin
         port map(ph0, rst, rdy, d, cpu_a, read);
 
     riot_A6532: A6532
-        port map(ph1, read, riot_rs, riot_cs,
+        port map(clk, ph2, read, riot_rs, riot_cs,
             riot_irq, d, pa, pb, riot_pa7, riot_a);
 
     tia_inst: TIA
         port map(vid_clk, clk, tia_cs, read, tia_a, d,
-            colu, csyn, vsyn, hsyn, rgbx2, cv, rdy, ph0, ph1,
+            colu, csyn, vsyn, hsyn, rgbx2, cv, rdy, ph0, ph2,
             au0, au1, av0, av1, paddle_0, paddle_1, paddle_2, paddle_3,
 				paddle_ena, inpt4, inpt5, pal, tv15khz);
 
