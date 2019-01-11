@@ -403,33 +403,40 @@ use ieee.numeric_std.all;
 
 entity paddle is
    port(clk: in std_logic;
+        hsync: in std_logic;
         value: in std_logic_vector(7 downto 0);
         rst: in std_logic;       
         o: out std_logic
      );
 end paddle;
 
-architecture arch of paddle is 
-begin
-	process(clk, rst)
-		variable cnt: integer range 0 to 190;
-	begin 
-		if( rst = '1' ) then
-			-- map -128..127 -> 190..0
-			cnt := to_integer(96 + signed(value)/2 + signed(value)/4);
-	   elsif (clk'event and clk = '1') then
-			if(cnt /= 190) then
-				cnt := cnt + 1;
-			end if;
-      end if;
+architecture arch of paddle is
 
-		-- return 1 if counter has "discharged"
-		if(cnt = 190) then
-			o <= '1';
-		else
-			o <= '0';
-		end if;
-	end process;
+signal hsync_d: std_logic;
+
+begin
+    process(clk, rst, hsync)
+        variable cnt: integer range 0 to 190;
+    begin
+        if (clk'event and clk = '1') then
+            hsync_d <= hsync;
+            if( rst = '1' ) then
+                -- map -128..127 -> 190..0
+                cnt := to_integer(96 + signed(value)/2 + signed(value)/4);
+            elsif (hsync_d = '0' and hsync = '1') then
+                if(cnt /= 190) then
+                    cnt := cnt + 1;
+                end if;
+            end if;
+        end if;
+
+        -- return 1 if counter has "discharged"
+        if(cnt = 190) then
+            o <= '1';
+        else
+            o <= '0';
+        end if;
+    end process;
 end arch;
 
 library ieee;
@@ -715,10 +722,10 @@ architecture arch of TIA is
 	  signal inpt3: std_logic;
 
 begin
-    paddle0: work.paddle port map(hsync, paddle_0, inpt03_chg, inpt0);
-    paddle1: work.paddle port map(hsync, paddle_1, inpt03_chg, inpt1);
-    paddle2: work.paddle port map(hsync, paddle_2, inpt03_chg, inpt2);
-    paddle3: work.paddle port map(hsync, paddle_3, inpt03_chg, inpt3);
+    paddle0: work.paddle port map(clk, hsync, paddle_0, inpt03_chg, inpt0);
+    paddle1: work.paddle port map(clk, hsync, paddle_1, inpt03_chg, inpt1);
+    paddle2: work.paddle port map(clk, hsync, paddle_2, inpt03_chg, inpt2);
+    paddle3: work.paddle port map(clk, hsync, paddle_3, inpt03_chg, inpt3);
 
     h_cntr: work.cntr2 port map(clk, h_cntr_rst, '1', h_cntr_out);
     lfsr: work.lfsr6 port map(clk, h_lfsr_rst, h_lfsr_cnt, h_lfsr_out);
