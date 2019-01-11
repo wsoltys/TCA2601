@@ -49,15 +49,15 @@ begin
 
 	rst_n <= not reset;
 	
-	-- produce a 1us tick from the 57MHz ref clock
+	-- produce a 1us tick from the 28MHz ref clock
   process (clk, reset)
-		variable count : integer range 0 to 56;
+		variable count : integer range 0 to 27;
 	begin
 	  if reset = '1' then
 			tick1us <= '0';
 			count := 0;
 	  elsif rising_edge (clk) then
-			if count = 56 then
+			if count = 27 then
 		  	tick1us <= '1';
 		  	count := 0;
 			else

@@ -481,9 +481,9 @@ begin
     port map (vid_clk, '0', ps2Clk, ps2data, ps2_scancode);
 
   -- if a gamepad has 4 buttons then buttons 3 and 4 are mapped to start and select
-  p_start <= '0' when (ps2_scancode = X"01" or buttons(1) = '1' or joy0(7) = '1' or joy1(7) = '1' ) else '1'; -- F9 or MiST right button
+  p_start  <= '0' when (ps2_scancode = X"01" or joy0(7) = '1' or joy1(7) = '1' ) else '1'; -- F9 or MiST right button
   p_select <= '0' when (ps2_scancode = X"09" or joy0(6) = '1' or joy1(6) = '1' ) else '1'; -- F10
 
-  LED <= not p_color; -- yellow led is bright when color mode is selected
+  LED <= not downl; -- yellow led is bright when downloading ROM
 
 end architecture;
