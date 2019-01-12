@@ -102,6 +102,8 @@ architecture rtl of MA2601 is
   signal joy1       : std_logic_vector(7 downto 0);
   signal joy_a_0    : std_logic_vector(15 downto 0);
   signal joy_a_1    : std_logic_vector(15 downto 0);
+  signal joy_ana_0  : std_logic_vector(15 downto 0);
+  signal joy_ana_1  : std_logic_vector(15 downto 0);
   signal status     : std_logic_vector(31 downto 0);
   signal ascii_new  : std_logic;
   signal ascii_code : STD_LOGIC_VECTOR(6 DOWNTO 0);
@@ -144,12 +146,13 @@ architecture rtl of MA2601 is
   constant CONF_STR : string :=
     "MA2601;A26BIN?? ;"&
     "F,A26BIN?? ,Load SuperChip;"&
-    "O1,Video standard,NTSC,PAL;"&
-    "O2,Video mode,Color,B&W;"&
     "O3,Difficulty P1,A,B;"&
     "O4,Difficulty P2,A,B;"&
     "O5,Controller,Joystick,Paddle;"&
-    "O67,Scanlines,Off,25%,50%,75%;";
+    "O6,Joystick Swap,Off,On;"&
+    "O1,Video standard,NTSC,PAL;"&
+    "O2,Video mode,Color,B&W;"&
+    "O78,Scanlines,Off,25%,50%,75%;";
 
   function to_slv(s: string) return std_logic_vector is
     constant ss: string(1 to s'length) := s;
@@ -268,6 +271,8 @@ begin
   p_dif(0) <= not status(3);
   p_dif(1) <= not status(4);
   sc <= index(1); -- 2nd menu index - load with SuperChip support
+  joy_ana_0 <= joy_a_0 when status(6) = '0' else joy_a_1;
+  joy_ana_1 <= joy_a_1 when status(6) = '0' else joy_a_0;
 -- -----------------------------------------------------------------------
 -- A2601 core
 -- -----------------------------------------------------------------------
@@ -294,10 +299,10 @@ begin
       p2_b => p2_b,
       p2_u => p2_u,
       p2_d => p2_d,
-      paddle_0 => joy_a_0(15 downto 8),
-      paddle_1 => joy_a_0(7 downto 0),
-      paddle_2 => joy_a_1(15 downto 8),
-      paddle_3 => joy_a_1(7 downto 0),
+      paddle_0 => joy_ana_0(15 downto 8),
+      paddle_1 => joy_ana_0(7 downto 0),
+      paddle_2 => joy_ana_1(15 downto 8),
+      paddle_3 => joy_ana_1(7 downto 0),
       paddle_ena => status(5),
       p_start => p_start,
       p_select => p_select,
@@ -315,7 +320,7 @@ begin
   scandoubler_inst: scandoubler
     port map (
         clk_sys     => vid_clk,
-        scanlines   => status(7 downto 6),
+        scanlines   => status(8 downto 7),
 
         hs_in       => not O_HSYNC,
         vs_in       => not O_VSYNC,
@@ -412,19 +417,19 @@ begin
   -- bit 3: right
   -- bit 4: fire
   -- bit 5: 2nd fire (required for paddle emulation)
-  p_l <= not joy0(1);
-  p_r <= not joy0(0);
-  p_a <= not joy0(4);
-  p_b <= not joy0(5);
-  p_u <= not joy0(3);
-  p_d <= not joy0(2);
+  p_l <= not joy0(1) when status(6) = '0' else not joy1(1);
+  p_r <= not joy0(0) when status(6) = '0' else not joy1(0);
+  p_a <= not joy0(4) when status(6) = '0' else not joy1(4);
+  p_b <= not joy0(5) when status(6) = '0' else not joy1(5);
+  p_u <= not joy0(3) when status(6) = '0' else not joy1(3);
+  p_d <= not joy0(2) when status(6) = '0' else not joy1(2);
 
-  p2_l <= not joy1(1);
-  p2_r <= not joy1(0);
-  p2_a <= not joy1(4);
-  p2_b <= not joy1(5);
-  p2_u <= not joy1(3);
-  p2_d <= not joy1(2);
+  p2_l <= not joy1(1) when status(6) = '0' else not joy0(1);
+  p2_r <= not joy1(0) when status(6) = '0' else not joy0(0);
+  p2_a <= not joy1(4) when status(6) = '0' else not joy0(4);
+  p2_b <= not joy1(5) when status(6) = '0' else not joy0(5);
+  p2_u <= not joy1(3) when status(6) = '0' else not joy0(3);
+  p2_d <= not joy1(2) when status(6) = '0' else not joy0(2);
 
 
 -- -----------------------------------------------------------------------
