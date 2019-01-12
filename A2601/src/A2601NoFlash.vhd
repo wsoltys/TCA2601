@@ -78,53 +78,6 @@ end A2601NoFlash;
 
 architecture arch of A2601NoFlash is
 
-    component A2601 is
-    port(vid_clk: in std_logic;
-         clk : in std_logic;
-         rst: in std_logic;
-         d: inout std_logic_vector(7 downto 0);
-         a: out std_logic_vector(12 downto 0);
-         r: out std_logic;
-         pa: inout std_logic_vector(7 downto 0);
-         pb: inout std_logic_vector(7 downto 0);
-         paddle_0: in std_logic_vector(7 downto 0);
-         paddle_1: in std_logic_vector(7 downto 0);
-         paddle_2: in std_logic_vector(7 downto 0);
-         paddle_3: in std_logic_vector(7 downto 0);
-         paddle_ena: in std_logic;
-         inpt4: in std_logic;
-         inpt5: in std_logic;
-         colu: out std_logic_vector(6 downto 0);
-         csyn: out std_logic;
-         vsyn: out std_logic;
-         hsyn: out std_logic;
-         rgbx2: out std_logic_vector(23 downto 0);
-         cv: out std_logic_vector(7 downto 0);
-         au0: out std_logic;
-         au1: out std_logic;
-         av0: out std_logic_vector(3 downto 0);
-         av1: out std_logic_vector(3 downto 0);
-         ph0_out: out std_logic;
-         ph2_out: out std_logic;
-         pal: in std_logic;
-         tv15khz: in std_logic);
-    end component;
-	
-	 component dac is
-	 port(DACout: 	out std_logic;
-			DACin:	in std_logic_vector(4 downto 0);
-			Clk:		in std_logic;
-			Reset:	in std_logic);
-	 end component;	
-	 
-   component ram128x8 is
-        port(clk: in std_logic;
-             r: in std_logic;
-             d_in: in std_logic_vector(7 downto 0);
-             d_out: out std_logic_vector(7 downto 0);
-             a: in std_logic_vector(6 downto 0));
-    end component;
-    
     signal d_ram: std_logic_vector(7 downto 0);
     --signal cpu_d: std_logic_vector(7 downto 0);
     signal a_ram: std_logic_vector(14 downto 0);
@@ -218,17 +171,45 @@ architecture arch of A2601NoFlash is
     signal DpcClockDivider : unsigned(9 downto 0);
 
 begin
-	  
-	ms_A2601: A2601
-        port map(vid_clk, clk, rst, cpu_d, cpu_a, cpu_r,pa, pb, 
-				paddle_0, paddle_1, paddle_2, paddle_3, paddle_ena, 
-				inpt4, inpt5, open, open, vsyn, hsyn, rgbx2, cv, 
-				au0, au1, av0, av1, ph0, ph2, pal, tv15khz);
-	
-	dac_inst: dac 
-		port map(audio, au, vid_clk, '0');	
 
-	
+	ms_A2601: work.A2601
+    port map(
+        vid_clk     => vid_clk,
+        clk         => clk,
+        rst         => rst,
+        d           => cpu_d,
+        a           => cpu_a,
+        r           => cpu_r,
+        pa          => pa,
+        pb          => pb,
+        paddle_0    => paddle_0,
+        paddle_1    => paddle_1,
+        paddle_2    => paddle_2,
+        paddle_3    => paddle_3,
+        paddle_ena  => paddle_ena,
+        inpt4       => inpt4,
+        inpt5       => inpt5,
+        colu        => open,
+        csyn        => open,
+        vsyn        => vsyn,
+        hsyn        => hsyn,
+        rgbx2       => rgbx2,
+        cv          => cv,
+        au0         => au0,
+        au1         => au1,
+        av0         => av0,
+        av1         => av1,
+        ph0_out     => ph0,
+        ph2_out     => ph2,
+        pal         => pal);
+
+    dac_inst: work.dac 
+    port map(
+        clk         => vid_clk,
+        Reset       => rst,
+        DACin       => au,
+        DACout      => audio);
+
   O_VIDEO_R <= rgbx2(23 downto 18);
   O_VIDEO_G <= rgbx2(15 downto 10);
   O_VIDEO_B <= rgbx2(7 downto 2);	
@@ -285,7 +266,7 @@ begin
 
     au <= std_logic_vector(auv0 + auv1);
 
-    sc_ram128x8: ram128x8
+    sc_ram128x8: work.ram128x8
         port map(sc_clk, sc_r, sc_d_in, sc_d_out, sc_a);
 
     sc_clk <= clk;

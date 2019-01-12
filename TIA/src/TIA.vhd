@@ -601,8 +601,7 @@ entity TIA is
          paddle_ena: in std_logic;
          inpt4: in std_logic;
          inpt5: in std_logic;
-         pal: in std_logic := '0';
-         tv15khz: in std_logic := '0'
+         pal: in std_logic := '0'
         );
 end TIA;
 
