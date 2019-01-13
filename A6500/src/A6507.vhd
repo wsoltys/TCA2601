@@ -33,17 +33,6 @@ end A6507;
 
 architecture arch of A6507 is
 
-    component A6502 is
-        port(clk: in std_logic;
-             rst: in std_logic;
-             irq: in std_logic;
-             nmi: in std_logic;
-             rdy: in std_logic;
-             d: inout std_logic_vector(7 downto 0);
-             ad: out std_logic_vector(15 downto 0);
-             r: out std_logic);
-    end component;
-
     signal ad_full: unsigned(15 downto 0);
     signal cpuDi: std_logic_vector(7 downto 0);
     signal cpuDo: unsigned(7 downto 0);

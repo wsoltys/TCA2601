@@ -47,101 +47,59 @@ entity A2601 is
          av0: out std_logic_vector(3 downto 0);
          av1: out std_logic_vector(3 downto 0);
          ph0_out: out std_logic;
-         ph1_out: out std_logic;
-         pal: in std_logic;
-         tv15khz: in std_logic);
+         ph2_out: out std_logic;
+         pal: in std_logic);
 end A2601;
 
 architecture arch of A2601 is
-
---    attribute pullup: string;
---    attribute pullup of pa: signal is "TRUE";
---    attribute pullup of pb: signal is "TRUE";
-
-    component A6507 is
-        port(clk: in std_logic;
-             rst: in std_logic;
-             rdy: in std_logic;
-             d: inout std_logic_vector(7 downto 0);
-             ad: out std_logic_vector(12 downto 0);
-             r: out std_logic);
-    end component;
-
-    component A6532 is
-        port(clk: in std_logic;
-             r: in std_logic;
-             rs: in std_logic;
-             cs: in std_logic;
-             irq: out std_logic;
-             d: inout std_logic_vector(7 downto 0);
-             pa: inout std_logic_vector(7 downto 0);
-             pb: inout std_logic_vector(7 downto 0);
-             pa7: in std_logic;
-             a: in std_logic_vector(6 downto 0));
-    end component;
-
-    component TIA is
-        port(vid_clk: in std_logic;
-             clk: in std_logic;
-             cs: in std_logic;
-             r: in std_logic;
-             a: in std_logic_vector(5 downto 0);
-             d: inout std_logic_vector(7 downto 0);
-             colu: out std_logic_vector(6 downto 0);
-             csyn: out std_logic;
-             vsyn: out std_logic;
-             hsyn: out std_logic;
-             rgbx2: out std_logic_vector(23 downto 0);
-             cv: out std_logic_vector(7 downto 0);
-             rdy: out std_logic;
-             ph0: out std_logic;
-             ph1: out std_logic;
-             au0: out std_logic;
-             au1: out std_logic;
-             av0: out std_logic_vector(3 downto 0);
-             av1: out std_logic_vector(3 downto 0);
-             paddle_0: in std_logic_vector(7 downto 0);
-             paddle_1: in std_logic_vector(7 downto 0);
-             paddle_2: in std_logic_vector(7 downto 0);
-             paddle_3: in std_logic_vector(7 downto 0);
-             paddle_ena: in std_logic;
-             inpt4: in std_logic;
-             inpt5: in std_logic;
-             pal: in std_logic;
-             tv15khz: in std_logic);
-    end component;
 
     signal rdy: std_logic;
     signal cpu_a: std_logic_vector(12 downto 0);
     signal read: std_logic;
     signal riot_rs: std_logic;
     signal riot_cs: std_logic;
-    signal riot_irq: std_logic;
     signal riot_pa7: std_logic;
     signal riot_a: std_logic_vector(6 downto 0);
     signal tia_cs: std_logic;
     signal tia_a: std_logic_vector(5 downto 0);
     signal ph0: std_logic;
-    signal ph1: std_logic;	 
+    signal ph2: std_logic;
+
 begin
 
     ph0_out <= ph0;
-    ph1_out <= ph1;
+    ph2_out <= ph2;
 
     r <= read;
 
-    cpu_A6507: A6507
-        port map(ph0, rst, rdy, d, cpu_a, read);
+    cpu_A6507: work.A6507
+    port map(
+        clk     => ph0,
+        rst     => rst,
+        rdy     => rdy,
+        d       => d,
+        ad      => cpu_a,
+        r       => read);
 
-    riot_A6532: A6532
-        port map(ph1, read, riot_rs, riot_cs,
-            riot_irq, d, pa, pb, riot_pa7, riot_a);
+    riot_A6532: work.A6532
+    port map(
+        clk     => clk,
+        ph2     => ph2,
+        r       => read,
+        rs      => riot_rs,
+        cs      => riot_cs,
+        irq     => open,
+        d       => d,
+        pa      => pa,
+        pb      => pb,
+        pa7     => riot_pa7,
+        a       => riot_a);
 
-    tia_inst: TIA
+    tia_inst: work.TIA
         port map(vid_clk, clk, tia_cs, read, tia_a, d,
-            colu, csyn, vsyn, hsyn, rgbx2, cv, rdy, ph0, ph1,
+            colu, csyn, hsyn, vsyn, rgbx2, cv, rdy, ph0, ph2,
             au0, au1, av0, av1, paddle_0, paddle_1, paddle_2, paddle_3,
-				paddle_ena, inpt4, inpt5, pal, tv15khz);
+				paddle_ena, inpt4, inpt5, pal);
 
     tia_cs <= '1' when (cpu_a(12) = '0') and (cpu_a(7) = '0') else '0';
     riot_cs <= '1' when (cpu_a(12) = '0') and (cpu_a(7) = '1') else '0';
