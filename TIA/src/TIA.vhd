@@ -224,6 +224,7 @@ entity player is
           grpnew: in std_logic_vector(7 downto 0);
           grpold: in std_logic_vector(7 downto 0);
           vdel: in std_logic;
+          mrst: out std_logic;
           pix: out std_logic
        );
 end player;
@@ -252,6 +253,7 @@ architecture arch of player is
     signal ph0: std_logic;
     signal ph1: std_logic;
     signal ph1_edge: std_logic;
+    signal fstob: std_logic;
 
 begin
 
@@ -269,6 +271,8 @@ begin
     lfsr_rst <= '1' when (lfsr_out = "101101") or (lfsr_out = "111111") or (prst = '1') else '0';
     lfsr_cnt <= '1' when (ph1_edge = '1') and (count = '1') else '0';
 
+    mrst <= '1' when fstob = '1' and scan_out = "001" else '0';
+
     process(clk, count)
     begin
         if (clk'event and clk = '1' and count = '1') then
@@ -278,6 +282,11 @@ begin
                     ((lfsr_out = "101111") and ((nusiz = "011") or (nusiz = "010") or (nusiz = "110"))) or
                     ((lfsr_out = "111001") and ((nusiz = "100") or (nusiz = "110"))) then
                     start <= '1';
+                    if (lfsr_out = "101101") then
+                        fstob <= '1';
+                    else
+                        fstob <= '0';
+                    end if;
                 else
                     start <= '0';
                 end if;
@@ -613,6 +622,7 @@ architecture arch of TIA is
     signal p0_hmove: std_logic_vector(3 downto 0);
     signal p0_count: std_logic;
     signal p0_ec: std_logic := '0';
+    signal p0_mrst: std_logic;
 
     signal p1_rst: std_logic;
     signal p1_nusiz: std_logic_vector(2 downto 0) := "000";
@@ -625,6 +635,7 @@ architecture arch of TIA is
     signal p1_hmove: std_logic_vector(3 downto 0);
     signal p1_count: std_logic;
     signal p1_ec: std_logic := '0';
+    signal p1_mrst: std_logic;
 
     signal m0_rst: std_logic;
     signal m0_enable: std_logic;
@@ -633,6 +644,7 @@ architecture arch of TIA is
     signal m0_hmove: std_logic_vector(3 downto 0);
     signal m0_count: std_logic;
     signal m0_ec: std_logic := '0';
+    signal m0_resp0 : std_logic := '0';
 
     signal m1_rst: std_logic;
     signal m1_enable: std_logic;
@@ -641,6 +653,7 @@ architecture arch of TIA is
     signal m1_hmove: std_logic_vector(3 downto 0);
     signal m1_count: std_logic;
     signal m1_ec: std_logic := '0';
+    signal m1_resp1 : std_logic := '0';
 
     signal bl_rst: std_logic;
     signal bl_ennew: std_logic;
@@ -809,17 +822,17 @@ begin
 
     p0: work.player
         port map(clk, p0_rst, p0_count, p0_nusiz, p0_reflect,
-                    p0_grpnew, p0_grpold, p0_vdel, p0_pix);
+                    p0_grpnew, p0_grpold, p0_vdel, p0_mrst, p0_pix);
 
     p1: work.player
         port map(clk, p1_rst, p1_count, p1_nusiz, p1_reflect,
-                    p1_grpnew, p1_grpold, p1_vdel, p1_pix);
+                    p1_grpnew, p1_grpold, p1_vdel, p1_mrst, p1_pix);
 
     m0: work.missile
-        port map(clk, m0_rst, m0_count, m0_enable, p0_nusiz, m0_size, m0_pix);
+        port map(clk, m0_rst or (m0_resp0 and p0_mrst), m0_count, m0_enable and not m0_resp0, p0_nusiz, m0_size, m0_pix);
 
     m1: work.missile
-        port map(clk, m1_rst, m1_count, m1_enable, p1_nusiz, m1_size, m1_pix);
+        port map(clk, m1_rst or (m1_resp1 and p1_mrst), m1_count, m1_enable and not m1_resp1, p1_nusiz, m1_size, m1_pix);
 
     bl: work.ball
         port map(clk, bl_rst, bl_count, bl_ennew, bl_enold, bl_vdel, bl_size, bl_pix);
@@ -1022,6 +1035,10 @@ begin
                         a0_vol <= d(3 downto 0);
                     when A_AUDV1 =>
                         a1_vol <= d(3 downto 0);
+                    when A_RESMP0 =>
+                        m0_resp0 <= d(1);
+                    when A_RESMP1 =>
+                        m1_resp1 <= d(1);
                     when others => null;
                 end case;
             end if;
