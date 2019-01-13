@@ -850,15 +850,6 @@ begin
     bl: work.ball
         port map(clk, bl_rst, bl_count, bl_ennew, bl_enold, bl_vdel, bl_size, bl_pix);
 
-    process(clk, h_lfsr_cnt)
-    begin
-        if (clk'event and clk = '1') then
-            if h_lfsr_out = "000000" then
-                bl_enold <= bl_ennew;
-            end if;
-        end if;
-    end process;
-
     pf_output: process(clk, h_lfsr_cnt)
     begin
         if (clk'event and clk = '1') then
@@ -1024,6 +1015,7 @@ begin
                         p1_grpold <= p1_grpnew;
                         p0_grpnew <= d;
                     when A_GRP1 =>
+                        bl_enold <= bl_ennew;
                         p0_grpold <= p0_grpnew;
                         p1_grpnew <= d;
                     when A_REFP0 =>
