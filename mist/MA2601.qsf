@@ -286,6 +286,7 @@ set_global_assignment -name PHYSICAL_SYNTHESIS_MAP_LOGIC_TO_MEMORY_FOR_AREA OFF
 set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION OFF
 set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING OFF
 set_global_assignment -name SMART_RECOMPILE OFF
+set_global_assignment -name ENABLE_DRC_SETTINGS ON
 set_global_assignment -name VERILOG_FILE scandoubler.v
 set_global_assignment -name SYSTEMVERILOG_FILE rgb2ypbpr.sv
 set_global_assignment -name VHDL_FILE ps2kbd.vhd
@@ -293,12 +294,10 @@ set_global_assignment -name VHDL_FILE keyboard.vhd
 set_global_assignment -name VERILOG_FILE data_io_ram.v
 set_global_assignment -name VERILOG_FILE data_io.v
 set_global_assignment -name VERILOG_FILE osd.v
-set_global_assignment -name VHDL_FILE clk_div.vhd
 set_global_assignment -name VERILOG_FILE user_io.v
 set_global_assignment -name VHDL_FILE MA2601.vhd
 set_global_assignment -name VHDL_FILE ../TIA/src/NTSCLookups.vhd
 set_global_assignment -name VHDL_FILE ../TIA/src/Common.vhd
-set_global_assignment -name VHDL_FILE ../A2601/src/pacman_dblscan.vhd
 set_global_assignment -name VHDL_FILE ../TIA/src/TIA.vhd
 set_global_assignment -name VHDL_FILE ../A6532/src/A6532.vhd
 set_global_assignment -name VHDL_FILE ../A6500/src/A6507.vhd
@@ -306,7 +305,6 @@ set_global_assignment -name VHDL_FILE ../A6500/src/cpu65xx_fast.vhd
 set_global_assignment -name VHDL_FILE ../A6500/src/cpu65xx_e.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/A2601NoFlash.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/A2601Core.vhd
-set_global_assignment -name QIP_FILE ../A2601/src/vga_framebuffer.qip
 set_global_assignment -name VHDL_FILE ../TIA/src/VGAColorTable.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/DeltaSigma.vhd
 set_global_assignment -name QIP_FILE pll27.qip
