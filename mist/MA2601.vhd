@@ -91,7 +91,7 @@ architecture rtl of MA2601 is
   signal p_select: std_logic := '1';
   signal p_color: std_logic := '1';
   signal sc: std_logic := '0';
-  signal force_bs: std_logic_vector(2 downto 0) := "000";
+  signal force_bs: std_logic_vector(3 downto 0) := "0000";
   signal pal: std_logic := '0';
   signal p_dif: std_logic_vector(1 downto 0) := (others => '0');
 
@@ -475,11 +475,13 @@ begin
 
   -- force bank switch type by file extension
   process (file_ext) begin
-    force_bs <= "000";
-    if    file_ext(23 downto 8) = x"4530" or file_ext(23 downto 8) = x"6530" then force_bs <= "100"; -- E0
-    elsif file_ext(23 downto 8) = x"4645" or file_ext(23 downto 8) = x"6665" then force_bs <= "011"; -- FE
-    elsif file_ext(23 downto 8) = x"3346" or file_ext(23 downto 8) = x"3366" then force_bs <= "101"; -- 3F
-    elsif file_ext(23 downto 8) = x"5032" or file_ext(23 downto 8) = x"7032" then force_bs <= "111"; -- P2 (Pitfall II)
+    force_bs <= "0000";
+    if    file_ext(23 downto 8) = x"4530" or file_ext(23 downto 8) = x"6530" then force_bs <= "0100"; -- E0
+    elsif file_ext(23 downto 8) = x"4645" or file_ext(23 downto 8) = x"6665" then force_bs <= "0011"; -- FE
+    elsif file_ext(23 downto 8) = x"3346" or file_ext(23 downto 8) = x"3366" then force_bs <= "0101"; -- 3F
+    elsif file_ext(23 downto 8) = x"5032" or file_ext(23 downto 8) = x"7032" then force_bs <= "0111"; -- P2 (Pitfall II)
+    elsif file_ext(23 downto 8) = x"4641" or file_ext(23 downto 8) = x"6661" then force_bs <= "1000"; -- FA
+    elsif file_ext(23 downto 8) = x"4356" or file_ext(23 downto 8) = x"6376" then force_bs <= "1001"; -- CV
     end if;
   end process;
 

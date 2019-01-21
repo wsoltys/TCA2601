@@ -33,43 +33,36 @@ end A6507;
 
 architecture arch of A6507 is
 
-    signal ad_full: unsigned(15 downto 0);
+    signal ad_full: unsigned(23 downto 0);
     signal cpuDi: std_logic_vector(7 downto 0);
     signal cpuDo: unsigned(7 downto 0);
     signal cpuWe: std_logic;
+	signal cpuWe_n: std_logic;
 
 begin
 
     ad <= std_logic_vector(ad_full(12 downto 0));
     r <= not cpuWe;
+	cpuWe <= not cpuWe_n;
     
-    cpuDi <= d when cpuWe = '0' else "ZZZZZZZZ";
+    cpuDi <= d when cpuWe = '0' else std_logic_vector(cpuDo);
     d <= std_logic_vector(cpuDo) when cpuWe = '1' else "ZZZZZZZZ";
-        
-	cpu: entity work.cpu65xx
-		generic map (
-			pipelineOpcode => false,
-			pipelineAluMux => false,
-			pipelineAluOut => false
-		)
-		port map (
-			clk => clk,
-			reset => rst,
-			enable => rdy or cpuWe,
-			nmi_n => '1',
-			irq_n => '1',
 
-			di => unsigned(cpuDi),
-			addr => ad_full,
-			do => cpuDo,
-			we => cpuWe,
-
-			debugOpcode => open,
-			debugPc => open,
-			debugA => open,
-			debugX => open,
-			debugY => open,
-			debugS => open
-		);
+	cpu: entity work.t65
+	port map (
+		Mode => "00",
+		Res_n => not rst,
+		Enable => rdy or cpuWe,
+		Clk => clk,
+		Rdy => '1',
+		Abort_n => '1',
+		IRQ_n => '1',
+		NMI_n => '1',
+		SO_n => '1',
+		R_W_n => cpuWe_n,
+		unsigned(A) => ad_full,
+		DI => cpuDi,
+		unsigned(DO) => cpuDo
+	);
 
 end arch;
