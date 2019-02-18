@@ -2,22 +2,39 @@ Port of the A2601 FPGA implementation for the MiST
 ---------------------------------------------------------------------------------
 
 Buttons:
-- right MiST button -> Start
-- Keyboard 1        -> Select
-- Keyboard 2        -> BW/Color (yellow led on = Color)
-- Keyboard F12      -> OSD to select roms from the sd card (needs extension .a26)
+- F9, Start button (Win key with MiST joystick emu)    -> Start
+- F10, Select button (Alt key with MiST joystick emu)  -> Select
+- F12                                                  -> OSD
+
+OSD
+- Select ROMs from the sd card (needs extension .a26 or .bin)
+- Special extensions (.e0, .3f, .fe, fa, cv) allows to force a specific mapper
+- P2 extension for Pitfall II Lost Caverns allows to use the DPC chip
+- 'S' for the 3rd letter of the extension, or the Load SuperChip item allows
+  to use SuperChip games (see below)
+- Switch between NTSC/PAL and color/b&w
+- Select difficulty for left and right
 
 Current limitations:
-- Supports only the common Atari bank switching schemes (F4, F6, F8, E0, 3F, FE)
-- No illegal opcodes
-- F4, F6, F8 bank switch types are auto-detected by the ROM file size. E0, 3F, FE
-  is auto-detected by the file extension, e.g. revenge_of_monezuma.e0 or
-  decathlon.fe will work
+- no support for DPC+, SaveKey and other custom EPROM/RAM/bank switching solutions
+  on carts
 
+Mapper support:
+- F4, F6, F8 - standard Atari mappers, autodetected by ROM size
+- E0 - Parker Bros. mapper, need .E0 file extension
+- 3F - Used for Tigervision 8K ROMs, need .3F file extension
+- FE - Activision mapper, used in Robot Tank and Decathlon, use .FE file extension
+- FA - CBS RAM Plus titles, use .FA file extension
+- CV - Commavid titles, use .CV file extension
+- P2 - Pitfall II Lost Caverns (DPC chip), use .P2 extension
 
-Supports mist.ini "scandouble_disable" for RGB 15khz output, or just hold the 
-middle MiST button to switch between modes. Also support YPbPr output via the
-ypbpr=1 mist.ini optioon.
+Some titles use an extra 128 byte RAM (called SuperChip). Unfortunately it cannot be
+autodected easily, so use the Load SuperChip OSD option to load these titles, or set
+the 3rd part of the file extension to 's'. E.g. Dig Dug is a game which requires
+SuperChip, rename it to digdug.f6s, and it'll work with the normal Load OSD item.
+
+Supports mist.ini scandoubler_disable for RGB 15khz, or you can hold the middle MiST
+button to switch between modes. ypbpr=1 in mist.ini also honored.
 
 All MiST related files including the Quartus project files are in the 'mist' subdirectory.
 

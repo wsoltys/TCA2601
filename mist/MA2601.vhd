@@ -144,8 +144,8 @@ architecture rtl of MA2601 is
 
   -- config string used by the io controller to fill the OSD
   constant CONF_STR : string :=
-    "MA2601;A26BIN?? ;"&
-    "F,A26BIN?? ,Load SuperChip;"&
+    "MA2601;A26BIN???;"&
+    "F,A26BIN???,Load SuperChip;"&
     "O3,Difficulty P1,A,B;"&
     "O4,Difficulty P2,A,B;"&
     "O5,Controller,Joystick,Paddle;"&
@@ -270,7 +270,6 @@ begin
   pal <= status(1);
   p_dif(0) <= not status(3);
   p_dif(1) <= not status(4);
-  sc <= index(1); -- 2nd menu index - load with SuperChip support
   joy_ana_0 <= joy_a_0 when status(6) = '0' else joy_a_1;
   joy_ana_1 <= joy_a_1 when status(6) = '0' else joy_a_0;
 -- -----------------------------------------------------------------------
@@ -472,6 +471,9 @@ begin
 
   data_io_inst: data_io
         port map(SPI_SCK, SPI_SS2, SPI_DI, downl, rom_size, index, file_ext, vid_clk, '0', rom_a, (others=>'0'), rom_do);
+
+  -- 2nd menu index - load with SuperChip support OR 3rd character in extension is 's'
+  sc <= '1' when index(1) = '1' or file_ext(7 downto 0) = x"53" or file_ext(7 downto 0) = x"73" else '0';
 
   -- force bank switch type by file extension
   process (file_ext) begin
