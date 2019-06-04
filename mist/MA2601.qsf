@@ -290,15 +290,11 @@ set_global_assignment -name ENABLE_DRC_SETTINGS ON
 set_global_assignment -name ENABLE_SIGNALTAP OFF
 set_global_assignment -name USE_SIGNALTAP_FILE out/stp1.stp
 
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
-set_global_assignment -name VERILOG_FILE scandoubler.v
-set_global_assignment -name SYSTEMVERILOG_FILE rgb2ypbpr.sv
+set_global_assignment -name QIP_FILE mist.qip
 set_global_assignment -name VHDL_FILE ps2kbd.vhd
 set_global_assignment -name VHDL_FILE keyboard.vhd
 set_global_assignment -name VERILOG_FILE data_io_ram.v
 set_global_assignment -name VERILOG_FILE data_io.v
-set_global_assignment -name VERILOG_FILE osd.v
-set_global_assignment -name VERILOG_FILE user_io.v
 set_global_assignment -name VHDL_FILE MA2601.vhd
 set_global_assignment -name VHDL_FILE ../TIA/src/NTSCLookups.vhd
 set_global_assignment -name VHDL_FILE ../TIA/src/Common.vhd
@@ -311,5 +307,4 @@ set_global_assignment -name VHDL_FILE ../A2601/src/A2601Core.vhd
 set_global_assignment -name VHDL_FILE ../TIA/src/VGAColorTable.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/DeltaSigma.vhd
 set_global_assignment -name QIP_FILE pll27.qip
-set_global_assignment -name SIGNALTAP_FILE out/clocks.stp
-set_global_assignment -name SIGNALTAP_FILE out/stp1.stp
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
