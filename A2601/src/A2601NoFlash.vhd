@@ -110,7 +110,7 @@ architecture arch of A2601NoFlash is
     signal sc_r: std_logic;
     signal sc_d_in: std_logic_vector(7 downto 0);
     signal sc_d_out: std_logic_vector(7 downto 0);
-    signal sc_a: std_logic_vector(9 downto 0);
+    signal sc_a: std_logic_vector(10 downto 0);
 
     subtype bss_type is std_logic_vector(3 downto 0);
 
@@ -122,6 +122,8 @@ architecture arch of A2601NoFlash is
     signal e0_bank1: std_logic_vector(2 downto 0) := "000";
     signal e0_bank2: std_logic_vector(2 downto 0) := "000";
     signal FE_latch: std_logic;
+    signal e7_bank0: std_logic_vector(2 downto 0);   -- 1000-17ff
+    signal e7_rambank: std_logic_vector(1 downto 0); -- 1800-19ff
 
     signal cpu_a: std_logic_vector(12 downto 0);
     signal cpu_d: std_logic_vector(7 downto 0);
@@ -140,6 +142,7 @@ architecture arch of A2601NoFlash is
     constant BANKP2: bss_type := "0111";
     constant BANKFA: bss_type := "1000";
     constant BANKCV: bss_type := "1001";
+    constant BANKE7: bss_type := "1010";
 
     signal bss: bss_type := BANK00; 	--bank switching method
 
@@ -268,18 +271,25 @@ begin
     au <= std_logic_vector(auv0 + auv1);
 
     workram: work.ramx8
-        generic map(10) -- 1k
+        generic map(11) -- 2k
         port map(clk, sc_r, sc_d_in, sc_d_out, sc_a);
 
     sc_r <= '1' when cpu_a(12 downto 10) = "100" and bss = BANKCV else
             '0' when cpu_a(12 downto 10) = "101" and bss = BANKCV else
             '1' when cpu_a(12 downto  8) = "10001" and bss = BANKFA else
             '0' when cpu_a(12 downto  8) = "10000" and bss = BANKFA else
+            '1' when cpu_a(12 downto 11) = "10" and bss = BANKE7 and (cpu_a(10) = '1' or e7_bank0 /= "111") else -- 1400 - 17ff
+            '0' when cpu_a(12 downto 10) = "100" and bss = BANKE7 and e7_bank0 = "111" else -- 1000-13ff
+            '1' when cpu_a(12 downto  8) = "11001" and bss = BANKE7 else
+            '0' when cpu_a(12 downto  8) = "11000" and bss = BANKE7 else
             '0' when cpu_a(12 downto  7) = "100000" else '1';
     sc_d_in <= cpu_d;
-    sc_a <=    cpu_a(9 downto 0) when bss = BANKCV else
-        "00" & cpu_a(7 downto 0) when bss = BANKFA else
-       "000" & cpu_a(6 downto 0);
+    sc_a <=
+         "0" & cpu_a(9 downto 0) when bss = BANKCV else
+       "000" & cpu_a(7 downto 0) when bss = BANKFA else
+	     "0" & cpu_a(9 downto 0) when bss = BANKE7 and cpu_a(12 downto 11) = "10" else
+         "1" & e7_rambank & cpu_a(7 downto 0) when bss = BANKE7 and cpu_a(12 downto 9) = "1100" else
+      "0000" & cpu_a(6 downto 0);
 
     -- ROM and SC output
     process(cpu_a, rom_do, sc_d_out, sc, bss, DpcFlags, DpcRandom, DpcMusicModes, DpcMusicFlags, soundAmplitudes)
@@ -323,6 +333,14 @@ begin
             cpu_d <= sc_d_out;
         elsif bss = BANKFA and cpu_a(12 downto 8) = "10000" then
             cpu_d <= "ZZZZZZZZ";
+		elsif bss = BANKE7 and cpu_a(12 downto 11) = "101" and e7_bank0 = "111" then
+			cpu_d <= sc_d_out;
+		elsif bss = BANKE7 and cpu_a(12 downto 11) = "100" and e7_bank0 = "111" then
+			cpu_d <= "ZZZZZZZZ";
+		elsif bss = BANKE7 and cpu_a(12 downto 8) = "11001" then
+			cpu_d <= sc_d_out;
+		elsif bss = BANKE7 and cpu_a(12 downto 8) = "11000" then
+			cpu_d <= "ZZZZZZZZ";
         elsif (cpu_a(12 downto 7) = "100001" and sc = '1') then
             cpu_d <= sc_d_out;
         elsif (cpu_a(12 downto 7) = "100000" and sc = '1') then
@@ -344,16 +362,18 @@ begin
     tf_bank <= bank(1 downto 0) when (cpu_a(11) = '0') else "11";
 
     rom_a <=
-		  "000" & cpu_a(11 downto 0) when bss = BANK00 else
-		  "00" & bank(0) & cpu_a(11 downto 0) when bss = BANKF8 else
-		  '0' & bank(1 downto 0) & cpu_a(11 downto 0) when bss = BANKF6 else
+         "000" & cpu_a(11 downto 0) when bss = BANK00 else
+          "00" & bank(0) & cpu_a(11 downto 0) when bss = BANKF8 else
+           "0" & bank(1 downto 0) & cpu_a(11 downto 0) when bss = BANKF6 else
           bank(2 downto 0) & cpu_a(11 downto 0) when bss = BANKF4 else
-		  "00" & bank(0) & cpu_a(11 downto 0) when bss = BANKFE else
-		  "00" & e0_bank & cpu_a(9 downto 0) when bss = BANKE0 else
-		  "00" & tf_bank & cpu_a(10 downto 0) when bss = BANK3F else
-          "0100" & std_logic_vector(2047 - DpcCounters(to_integer(unsigned(cpu_a(2 downto 0))))(10 downto 0)) when
+          "00" & bank(0) & cpu_a(11 downto 0) when bss = BANKFE else
+          "00" & e0_bank & cpu_a(9 downto 0) when bss = BANKE0 else
+          "00" & tf_bank & cpu_a(10 downto 0) when bss = BANK3F else
+        "0100" & std_logic_vector(2047 - DpcCounters(to_integer(unsigned(cpu_a(2 downto 0))))(10 downto 0)) when
             bss = BANKP2 and cpu_a >= "1" & x"008" and cpu_a <= "1" & x"017" else
-          "0000" & cpu_a(10 downto 0) when bss = BANKCV else
+        "0000" & cpu_a(10 downto 0) when bss = BANKCV else
+           "0" & e7_bank0 & cpu_a(10 downto 0) when cpu_a(12 downto 11) = "10" and bss = BANKE7 else
+        "0111" & cpu_a(10 downto 0) when (cpu_a(12 downto 11) = "11" or cpu_a(12 downto 10) = "101") and bss = BANKE7 else
           bank(2 downto 0) & cpu_a(11 downto 0);
 
     bankswch: process(ph0)
@@ -518,6 +538,13 @@ begin
                     when BANK3F =>
                         if (cpu_a = "0" & X"03F") then
                             bank(1 downto 0) <= cpu_d(1 downto 0);
+                        end if;
+                    when BANKE7 =>
+                        if cpu_a(11 downto 4) = X"FE" and cpu_a(3) = '0' then
+                            e7_bank0 <= cpu_a(2 downto 0);   -- FE0-FE7
+                        end if;
+                        if cpu_a(11 downto 4) = X"FE" and cpu_a(3 downto 2) = "10" then
+                            e7_rambank <= cpu_a(1 downto 0); -- FE8-FEB
                         end if;
                     when others =>
                         null;
