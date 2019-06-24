@@ -8,7 +8,7 @@ Buttons:
 
 OSD
 - Select ROMs from the sd card (needs extension .a26 or .bin)
-- Special extensions (.e0, .3f, .fe, fa, cv) allows to force a specific mapper
+- Special extensions (.e0, .3f, .fe, fa, cv, e7) allows to force a specific mapper
 - P2 extension for Pitfall II Lost Caverns allows to use the DPC chip
 - 'S' for the 3rd letter of the extension, or the Load SuperChip item allows
   to use SuperChip games (see below)
@@ -27,6 +27,7 @@ Mapper support:
 - FA - CBS RAM Plus titles, use .FA file extension
 - CV - Commavid titles, use .CV file extension
 - P2 - Pitfall II Lost Caverns (DPC chip), use .P2 extension
+- E7 - M-Networks mapper (Bump'n'Jump, Burgertime), use .E7 extension
 
 Some titles use an extra 128 byte RAM (called SuperChip). Unfortunately it cannot be
 autodected easily, so use the Load SuperChip OSD option to load these titles, or set
