@@ -1,5 +1,8 @@
 PLLJ_PLLSPE_INFO.txt
 *.bak
+*.qws
+*.rbf
+*.sof
 greybox_tmp/
 syn/
 db/

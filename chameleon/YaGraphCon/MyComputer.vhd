@@ -71,12 +71,12 @@ begin
 			vgaVsync => vgaVsync
 		);
 
-	A6502_instance: entity A6502
+	A6502_instance: entity work.A6502
 		port map(
 			clk => cpuClock,
 			rst => cpuReset,
-			irq => '1', 
-			nmi => '1',
+			--irq => '1', 
+			--nmi => '1',
 			rdy => '1',
 			d => cpuData,
 			ad => cpuAddress,
