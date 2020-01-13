@@ -260,6 +260,14 @@ set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to VGA_B[2]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to VGA_B[1]
 set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to VGA_B[0]
 
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to VGA_HS
+set_instance_assignment -name CURRENT_STRENGTH_NEW 8MA -to VGA_VS
+
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to SPI_DO
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to LED
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to AUDIO_L
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to AUDIO_R
+
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
