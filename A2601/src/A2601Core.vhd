@@ -40,7 +40,7 @@ entity A2601 is
          csyn: out std_logic;
          vsyn: out std_logic;
          hsyn: out std_logic;
-			rgbx2: out std_logic_vector(23 downto 0);
+         rgbx2: out std_logic_vector(23 downto 0);
          cv: out std_logic_vector(7 downto 0);
          au0: out std_logic;
          au1: out std_logic;
@@ -99,7 +99,7 @@ begin
         port map(vid_clk, clk, tia_cs, read, tia_a, d,
             colu, csyn, hsyn, vsyn, rgbx2, cv, rdy, ph0, ph2,
             au0, au1, av0, av1, paddle_0, paddle_1, paddle_2, paddle_3,
-				paddle_ena, inpt4, inpt5, pal);
+            paddle_ena, inpt4, inpt5, pal);
 
     tia_cs <= '1' when (cpu_a(12) = '0') and (cpu_a(7) = '0') else '0';
     riot_cs <= '1' when (cpu_a(12) = '0') and (cpu_a(7) = '1') else '0';

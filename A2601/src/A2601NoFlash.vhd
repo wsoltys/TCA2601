@@ -40,7 +40,7 @@ entity A2601NoFlash is
          O_HSYNC: out std_logic;
          O_VIDEO_R: out std_logic_vector(5 downto 0);
          O_VIDEO_G: out std_logic_vector(5 downto 0);
-         O_VIDEO_B: out std_logic_vector(5 downto 0);			
+         O_VIDEO_B: out std_logic_vector(5 downto 0);
          res: in std_logic;
          p_l: in std_logic;
          p_r: in std_logic;
@@ -54,12 +54,12 @@ entity A2601NoFlash is
          p2_b: in std_logic;
          p2_u: in std_logic;
          p2_d: in std_logic;
-			
+
          paddle_0: in std_logic_vector(7 downto 0);
          paddle_1: in std_logic_vector(7 downto 0);
          paddle_2: in std_logic_vector(7 downto 0);
          paddle_3: in std_logic_vector(7 downto 0);
-			paddle_ena: in std_logic;
+         paddle_ena: in std_logic;
         
          p_start: in std_logic;
          p_select: in std_logic;
@@ -98,22 +98,21 @@ architecture arch of A2601NoFlash is
 
     signal ph0: std_logic;
     signal ph2: std_logic;
-	 
+
     signal rgbx2: std_logic_vector(23 downto 0);
     signal hsyn: std_logic;
     signal vsyn: std_logic;
-	 
-	 signal ctrl_cntr: unsigned(3 downto 0);
+
+    signal ctrl_cntr: unsigned(3 downto 0);
     signal p_fn: std_logic;
 
-		signal rst_cntr: unsigned(12 downto 0) := "0000000000000";
+    signal rst_cntr: unsigned(12 downto 0) := "0000000000000";
     signal sc_r: std_logic;
     signal sc_d_in: std_logic_vector(7 downto 0);
     signal sc_d_out: std_logic_vector(7 downto 0);
     signal sc_a: std_logic_vector(10 downto 0);
 
     subtype bss_type is std_logic_vector(3 downto 0);
-
 
     signal bank: std_logic_vector(3 downto 0) := "0000";
     signal tf_bank: std_logic_vector(1 downto 0);
@@ -128,10 +127,10 @@ architecture arch of A2601NoFlash is
     signal cpu_a: std_logic_vector(12 downto 0);
     signal cpu_d: std_logic_vector(7 downto 0);
     signal cpu_r: std_logic;
-	--tmp
-	signal cv:  std_logic_vector(7 downto 0);
-	signal au:  std_logic_vector(4 downto 0);
-	
+    --tmp
+    signal cv:  std_logic_vector(7 downto 0);
+    signal au:  std_logic_vector(4 downto 0);
+
     constant BANK00: bss_type := "0000";
     constant BANKF8: bss_type := "0001";
     constant BANKF6: bss_type := "0010";
@@ -168,15 +167,15 @@ architecture arch of A2601NoFlash is
     signal DpcBottoms : B8_type := (	others => (others=>'0'));
     signal DpcFlags : B8_type := (	others => (others=>'0'));
     signal DpcCounters : B8_11_type := (	others => (others=>'0'));
-    signal DpcRandom	: std_logic_vector(7 downto 0) := x"01";
-    signal DpcWrite	: std_logic := '0';
+    signal DpcRandom : std_logic_vector(7 downto 0) := x"01";
+    signal DpcWrite : std_logic := '0';
     signal DpcClocks : unsigned(15 downto 0) := (others=>'0');
-	signal clk_music : unsigned(3 downto 0) := (others=>'0');	 -- 3 é o melhor
+    signal clk_music : unsigned(3 downto 0) := (others=>'0');	 -- 3 é o melhor
     signal DpcClockDivider : unsigned(9 downto 0);
 
 begin
 
-	ms_A2601: work.A2601
+    ms_A2601: work.A2601
     port map(
         vid_clk     => vid_clk,
         clk         => clk,
@@ -214,22 +213,21 @@ begin
         DACin       => au,
         DACout      => audio);
 
-  O_VIDEO_R <= rgbx2(23 downto 18);
-  O_VIDEO_G <= rgbx2(15 downto 10);
-  O_VIDEO_B <= rgbx2(7 downto 2);	
-  O_HSYNC   <= hsyn;
-  O_VSYNC   <= vsyn;
+    O_VIDEO_R <= rgbx2(23 downto 18);
+    O_VIDEO_G <= rgbx2(15 downto 10);
+    O_VIDEO_B <= rgbx2(7 downto 2);
+    O_HSYNC   <= hsyn;
+    O_VSYNC   <= vsyn;
 
- process(ph0)
+    process(ph0)
     begin
         if (ph0'event and ph0 = '1') then
-			if res = '1' then
-			rst <= '1';
-			else
-			rst <= '0';
-			end if;
-		end if;
-            
+            if res = '1' then
+                rst <= '1';
+            else
+                rst <= '0';
+            end if;
+        end if;
     end process;
 
     process(ph0)
@@ -241,30 +239,30 @@ begin
                 pb(0) <= p_start; 
                 pb(1) <= p_select; 
             elsif (ctrl_cntr = "0111") then
-					 if ( paddle_ena = '0' ) then
-					   -- normal mapping
-						pa(7 downto 4) <= p_r & p_l & p_d & p_u;
-						pa(3 downto 0) <= p2_r & p2_l & p2_d & p2_u;
-						inpt4 <= p_a;
-						inpt5 <= p2_a;
-					 else
-					   -- fire button mapping when paddles are used
-						pa(7 downto 4) <= p_a & p_b & "11";
-						pa(3 downto 0) <= p2_a & p2_b & "11";
-						inpt4 <= '1';
-						inpt5 <= '1';
-					 end if;
-           end if;
+                if ( paddle_ena = '0' ) then
+                    -- normal mapping
+                    pa(7 downto 4) <= p_r & p_l & p_d & p_u;
+                    pa(3 downto 0) <= p2_r & p2_l & p2_d & p2_u;
+                    inpt4 <= p_a;
+                    inpt5 <= p2_a;
+                else
+                    -- fire button mapping when paddles are used
+                    pa(7 downto 4) <= p_a & p_b & "11";
+                    pa(3 downto 0) <= p2_a & p2_b & "11";
+                    inpt4 <= '1';
+                    inpt5 <= '1';
+                end if;
+            end if;
         end if;
     end process;
-    
+
     pb(3) <= p_color;  --b/w / colour
     pb(6) <= p_dif(0); -- p1/left difficulty
     pb(7) <= p_dif(1); -- p2/right difficulty
     pb(5) <= '1'; --nc ?
     pb(4) <= '1'; --nc
     pb(2) <= '1'; --nc
-	 	 
+
     auv0 <= ("0" & unsigned(av0)) when (au0 = '1') else "00000";
     auv1 <= ("0" & unsigned(av1)) when (au1 = '1') else "00000";
 
@@ -287,7 +285,7 @@ begin
     sc_a <=
          "0" & cpu_a(9 downto 0) when bss = BANKCV else
        "000" & cpu_a(7 downto 0) when bss = BANKFA else
-	     "0" & cpu_a(9 downto 0) when bss = BANKE7 and cpu_a(12 downto 11) = "10" else
+         "0" & cpu_a(9 downto 0) when bss = BANKE7 and cpu_a(12 downto 11) = "10" else
          "1" & e7_rambank & cpu_a(7 downto 0) when bss = BANKE7 and cpu_a(12 downto 9) = "1100" else
       "0000" & cpu_a(6 downto 0);
 
@@ -303,7 +301,7 @@ begin
             cpu_d <= rom_do;
         elsif (bss = BANKP2 and cpu_a >= "1" & x"010" and cpu_a <= "1" & x"017")  then -- DPC READ - 0x1010 to 0x1017 (read graphics from extra 2kb ANDed)
             cpu_d <= rom_do and DpcFlags(to_integer(unsigned(cpu_a(2 downto 0))));
-		elsif (bss = BANKP2 and cpu_a >= "1" & x"000" and cpu_a <= "1" & x"003") then -- DPC READ - 0x1000 to 0x1003 (random number)
+        elsif (bss = BANKP2 and cpu_a >= "1" & x"000" and cpu_a <= "1" & x"003") then -- DPC READ - 0x1000 to 0x1003 (random number)
             cpu_d <= DpcRandom;
         elsif (bss = BANKP2 and cpu_a >= "1" & x"004" and cpu_a <= "1" & x"007") then -- DPC READ - 0x1004 to 0x1007 (Sound)
             ampI_v := "000";
@@ -333,14 +331,14 @@ begin
             cpu_d <= sc_d_out;
         elsif bss = BANKFA and cpu_a(12 downto 8) = "10000" then
             cpu_d <= "ZZZZZZZZ";
-		elsif bss = BANKE7 and cpu_a(12 downto 11) = "101" and e7_bank0 = "111" then
-			cpu_d <= sc_d_out;
-		elsif bss = BANKE7 and cpu_a(12 downto 11) = "100" and e7_bank0 = "111" then
-			cpu_d <= "ZZZZZZZZ";
-		elsif bss = BANKE7 and cpu_a(12 downto 8) = "11001" then
-			cpu_d <= sc_d_out;
-		elsif bss = BANKE7 and cpu_a(12 downto 8) = "11000" then
-			cpu_d <= "ZZZZZZZZ";
+        elsif bss = BANKE7 and cpu_a(12 downto 11) = "101" and e7_bank0 = "111" then
+            cpu_d <= sc_d_out;
+        elsif bss = BANKE7 and cpu_a(12 downto 11) = "100" and e7_bank0 = "111" then
+            cpu_d <= "ZZZZZZZZ";
+        elsif bss = BANKE7 and cpu_a(12 downto 8) = "11001" then
+            cpu_d <= sc_d_out;
+        elsif bss = BANKE7 and cpu_a(12 downto 8) = "11000" then
+            cpu_d <= "ZZZZZZZZ";
         elsif (cpu_a(12 downto 7) = "100001" and sc = '1') then
             cpu_d <= sc_d_out;
         elsif (cpu_a(12 downto 7) = "100000" and sc = '1') then
@@ -451,7 +449,7 @@ begin
                                                 -- random number read
                                                 DpcRandom <= DpcRandom(6 downto 0) & (not(DpcRandom(7) xor DpcRandom(5) xor DpcRandom(4) xor DpcRandom(3)));
                                                 --resultDPC <= DpcRandom;
-                                            --	else -- 0x1004 to 0x1007
+                                            --else -- 0x1004 to 0x1007
                                                 -- sound
                                                 --ampI_v := "000";
                                                 --
@@ -468,10 +466,10 @@ begin
                                             end if;
                                         --when "001" =>  -- 0x1008 to 0x100f - Graphics read
                                         --DpcDisplayPtr <= "100" & std_logic_vector(2047 - DpcCounters(w_index_v)(10 downto 0));
-										--when "010" =>  -- 0x1010 to 0x1017 - Graphics read (ANDed with flag)
-										--DpcDisplayPtr <= "100" & std_logic_vector(2047 - DpcCounters(w_index_v)(10 downto 0));-- and DpcFlags(w_index_v));
-										--when "111" =>  -- 0x1038 to 0x103f - Return the current flag value
-										--resultDPC <= DpcFlags(w_index_v);
+                                        --when "010" =>  -- 0x1010 to 0x1017 - Graphics read (ANDed with flag)
+                                        --DpcDisplayPtr <= "100" & std_logic_vector(2047 - DpcCounters(w_index_v)(10 downto 0));-- and DpcFlags(w_index_v));
+                                        --when "111" =>  -- 0x1038 to 0x103f - Return the current flag value
+                                        --resultDPC <= DpcFlags(w_index_v);
                                         when others => NULL;
                                     end case;
 
@@ -553,12 +551,12 @@ begin
         end if;
     end process;
 
-	 -- derive banking scheme from cartridge size
+     -- derive banking scheme from cartridge size
     process(rom_size, force_bs)
     begin
       if(force_bs /= "0000") then
         bss <= force_bs;
-      elsif(rom_size <= x"1000") then    -- 4k and less
+      elsif(rom_size <= x"1000") then -- 4k and less
         bss <= BANK00;
       elsif(rom_size <= x"2000") then -- 8k and less
         bss <= BANKF8;
@@ -595,6 +593,6 @@ begin
                 end if;
             end if;
         end if;
-	end process;
+    end process;
 
 end arch;

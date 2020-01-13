@@ -37,32 +37,32 @@ architecture arch of A6502 is
     signal cpuDi: std_logic_vector(7 downto 0);
     signal cpuDo: unsigned(7 downto 0);
     signal cpuWe: std_logic;
-	signal cpuWe_n: std_logic;
+    signal cpuWe_n: std_logic;
 
 begin
 
     ad <= std_logic_vector(ad_full(15 downto 0));
     r <= not cpuWe;
-	cpuWe <= not cpuWe_n;
+    cpuWe <= not cpuWe_n;
     
     cpuDi <= d when cpuWe = '0' else std_logic_vector(cpuDo);
     d <= std_logic_vector(cpuDo) when cpuWe = '1' else "ZZZZZZZZ";
 
-	cpu: entity work.t65
-	port map (
-		Mode => "00",
-		Res_n => not rst,
-		Enable => rdy or cpuWe,
-		Clk => clk,
-		Rdy => '1',
-		Abort_n => '1',
-		IRQ_n => '1',
-		NMI_n => '1',
-		SO_n => '1',
-		R_W_n => cpuWe_n,
-		unsigned(A) => ad_full,
-		DI => cpuDi,
-		unsigned(DO) => cpuDo
-	);
+    cpu: entity work.t65
+    port map (
+        Mode => "00",
+        Res_n => not rst,
+        Enable => rdy or cpuWe,
+        Clk => clk,
+        Rdy => '1',
+        Abort_n => '1',
+        IRQ_n => '1',
+        NMI_n => '1',
+        SO_n => '1',
+        R_W_n => cpuWe_n,
+        unsigned(A) => ad_full,
+        DI => cpuDi,
+        unsigned(DO) => cpuDo
+);
 
 end arch;

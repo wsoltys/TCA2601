@@ -37,7 +37,7 @@ architecture rtl of dac is
 
 begin
 
-	process(clk)
+	process(clk, Reset)
 	begin
 		if Reset = '1' then
 			SigmaLatch <= "1" & std_logic_vector(to_unsigned(0, MSBI + 2));
