@@ -18,7 +18,7 @@
 --
 
 library ieee;
-use ieee.std_logic_1164.all;       
+use ieee.std_logic_1164.all;
 
 entity lfsr6 is
    port(clk: in std_logic;
@@ -37,46 +37,46 @@ begin
 
     o <= d;
 
-    process(clk, prst)  
-    begin           
-        
-        if (clk'event and clk = '1') then           
-            if (prst = '1' and prst_l = '0') then 
+    process(clk, prst)
+    begin
+
+        if (clk'event and clk = '1') then
+            if (prst = '1' and prst_l = '0') then
                 prst_l <= '1'; 
-            elsif (cnt = '1') then                      
-                prst_l <= '0';      
-            end if;             
-        end if;             
-        
-        if (clk'event and clk = '1') then           
-            if (cnt = '1') then
-                if (prst_l = '1') then 
-                    d <= "000000";                                      
-                else 
-                    d <= (d(0) xnor d(1)) & d(5 downto 1);
-                end if;                             
+            elsif (cnt = '1') then
+                prst_l <= '0';
             end if;
         end if;
-        
+
+        if (clk'event and clk = '1') then
+            if (cnt = '1') then
+                if (prst_l = '1') then 
+                    d <= "000000";
+                else
+                    d <= (d(0) xnor d(1)) & d(5 downto 1);
+                end if;
+            end if;
+        end if;
+
     end process;
 
 end arch;
 
 library ieee;
-use ieee.std_logic_1164.all;       
+use ieee.std_logic_1164.all;
 
 entity cntr2 is
    port(clk: in std_logic;
-          rst: in std_logic;    
-          en: in std_logic;       
+          rst: in std_logic;
+          en: in std_logic;
           o: out std_logic_vector(1 downto 0)
        );
 end cntr2;
 
 architecture arch of cntr2 is 
-    
+
     signal d: std_logic_vector(1 downto 0) := "00";
-    
+
 begin
 
     o <= d;
@@ -85,13 +85,13 @@ begin
     begin
 --      if (rst = '1') then 
 --          d <= "00";
-        if (clk'event and clk = '1') then       
-            if (rst = '1') then 
+        if (clk'event and clk = '1') then
+            if (rst = '1') then
                 d <= "00";
-            elsif (en = '1') then 
-                case d is 
+            elsif (en = '1') then
+                case d is
                     when "00" => d <= "10";
-                    when "10" => d <= "11";                                             
+                    when "10" => d <= "11";
                     when "11" => d <= "01";
                     when "01" => d <= "00";
                     when others => null;
@@ -103,12 +103,12 @@ begin
 end arch;
 
 library ieee;
-use ieee.std_logic_1164.all;       
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity cntr3 is
-   port(clk: in std_logic;  
-          rst: in std_logic;    
+   port(clk: in std_logic;
+          rst: in std_logic;
           en: in std_logic;
           o: out std_logic_vector(2 downto 0)
        );
@@ -121,22 +121,22 @@ architecture arch of cntr3 is
 begin
 
     o <= std_logic_vector(d);
-    
+
     process(clk, rst)
-    begin       
+    begin
         if (clk'event and clk = '1') then
             if (rst = '1') then 
                 d <= "000";
-            elsif (en = '1') then           
+            elsif (en = '1') then
                 d <= d + 1;
             end if;
         end if;
     end process;
-    
+
 end arch;
 
 library ieee;
-use ieee.std_logic_1164.all;       
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.TIA_common.all;
@@ -151,22 +151,22 @@ entity audio is
 end audio;
 
 architecture arch of audio is 
-    
+
     signal dvdr: unsigned(4 downto 0) := "00000";
     signal sr4: std_logic_vector(3 downto 0) := "0000";
     signal sr5: std_logic_vector(4 downto 0) := "00000";
     signal sr5_tap: std_logic;
-    signal sr4_in: std_logic;   
-    signal sr5_in: std_logic;       
-    signal sr4_cnt: std_logic;  
-    signal sr5_cnt: std_logic;      
-    
+    signal sr4_in: std_logic;
+    signal sr5_in: std_logic;
+    signal sr4_cnt: std_logic;
+    signal sr5_cnt: std_logic;
+
 begin
 
     process(clk)
     begin 
-        if (clk'event and clk = '1') then           
-            if (cnt = '1') then                 
+        if (clk'event and clk = '1') then
+            if (cnt = '1') then
                 if (sr4_cnt = '1') then 
                     sr4 <= sr4_in & sr4(3 downto 1);
                 end if;
@@ -179,15 +179,15 @@ begin
                     dvdr <= dvdr + 1;
                 end if;
             end if;
-        end if;                     
-    end process;    
-    
+        end if;
+    end process;
+
     sr5_in <= '1' when 
         (ctrl = "0000") or 
         (sr5_tap = '1') or      
         (sr5 = "00000" and (ctrl(0) = '1' or ctrl(1) = '1' or sr4 = "1111"))
         else '0';
-        
+
     sr4_in <= '1' when 
         (ctrl = "0000") or 
         (ctrl(3 downto 2) = "00" and (sr4 = "1111" or ((sr4(1) xnor sr4(0)) = '1'))) or
@@ -195,18 +195,18 @@ begin
         (ctrl(3 downto 2) = "01" and sr4(3) = '0') or
         (ctrl(3 downto 2) = "10" and sr5(0) = '1') 
         else '0';
-    
-    sr5_tap <= sr5(0) xor sr4(0) when (ctrl(1 downto 0) = "00") else sr5(0) xor sr5(3);             
-    
+
+    sr5_tap <= sr5(0) xor sr4(0) when (ctrl(1 downto 0) = "00") else sr5(0) xor sr5(3);
+
     sr5_cnt <= '1' when (dvdr = unsigned(freq)) else '0';  -- CHECKME
-        
+
     sr4_cnt <= '1' when 
         (dvdr = unsigned(freq) and (
             (ctrl(1 downto 0) = "10" and sr5(4 downto 1) = "0001") or 
             (ctrl(1 downto 0) = "11" and sr5(0) = '1')  or
             (ctrl(1) = '0')))
         else '0';
-        
+
     ao <= sr4(0);
 
 end arch;
@@ -238,16 +238,16 @@ architecture arch of player is
     signal cntr_out: std_logic_vector(1 downto 0);
     signal cntr_rst: std_logic;
     signal cntr_en: std_logic;
-    
+
     signal scan_out: std_logic_vector(2 downto 0);
     signal scan_clk: std_logic := '0';
-    signal scan_en: std_logic := '0';   
+    signal scan_en: std_logic := '0';
     signal scan_cnt: std_logic;
-        
+
     signal start: std_logic := '0';
 
     signal scan_adr: std_logic_vector(2 downto 0);
-    
+
     signal pix_sel: std_logic_vector(1 downto 0);
 
     signal ph0: std_logic;
@@ -333,12 +333,12 @@ begin
 end arch;
 
 library ieee;
-use ieee.std_logic_1164.all;       
+use ieee.std_logic_1164.all;
 
 entity missile is
    port(clk: in std_logic;
-          prst: in std_logic;       
-          count: in std_logic;        
+          prst: in std_logic;
+          count: in std_logic;
           enable: in std_logic;
           nusiz: in std_logic_vector(2 downto 0);
           size: in std_logic_vector(1 downto 0);
@@ -351,31 +351,31 @@ architecture arch of missile is
     signal lfsr_out: std_logic_vector(5 downto 0);
     signal lfsr_rst: std_logic;
     signal lfsr_cnt: std_logic;
-    
+
     signal cntr_out: std_logic_vector(1 downto 0);
     signal cntr_rst: std_logic;
     signal cntr_en: std_logic;
-    
-    signal start1: std_logic := '0';    
+
+    signal start1: std_logic := '0';
     signal start2: std_logic := '0';
-        
+
     signal ph1: std_logic;
     signal ph1_edge: std_logic;
-    
+
 begin
 
     lfsr: work.lfsr6 port map(clk, lfsr_rst, lfsr_cnt, lfsr_out);
-    cntr: work.cntr2 port map(clk, cntr_rst, cntr_en, cntr_out); 
-        
+    cntr: work.cntr2 port map(clk, cntr_rst, cntr_en, cntr_out);
+
     ph1_edge <= '1' when (cntr_out = "10") else '0';
     ph1 <= '1' when (cntr_out = "11") else '0';
-    
+
     cntr_rst <= prst;
     cntr_en <= count;
-    
-    lfsr_rst <= '1' when (lfsr_out = "101101") or (lfsr_out = "111111") or (prst = '1') else '0';       
+
+    lfsr_rst <= '1' when (lfsr_out = "101101") or (lfsr_out = "111111") or (prst = '1') else '0';
     lfsr_cnt <= '1' when (ph1_edge = '1') and (count = '1') else '0';
-    
+
     process(clk)
     begin 
         if (clk'event and clk = '1') then                       
@@ -383,7 +383,7 @@ begin
                 if (lfsr_out = "101101") or
                     ((lfsr_out = "111000") and ((nusiz = "001") or (nusiz = "011"))) or 
                     ((lfsr_out = "101111") and ((nusiz = "011") or (nusiz = "010") or (nusiz = "110"))) or 
-                    ((lfsr_out = "111001") and ((nusiz = "100") or (nusiz = "110"))) then                   
+                    ((lfsr_out = "111001") and ((nusiz = "100") or (nusiz = "110"))) then
                     start1 <= '1';                  
                 else 
                     start1 <= '0';
@@ -393,28 +393,28 @@ begin
             end if;
         end if;
     end process;
-                            
+
     pix <= '1' when 
         (enable = '1' and (
             (start1 = '1' and (
                 (size(1) = '1') or 
                 (ph1 = '1') or 
                 (cntr_out(0) = '1' and size(0) = '1'))) or
-            (start2 = '1' and size = "11")))                            
+                (start2 = '1' and size = "11")))
         else '0';
-            
+
 end arch;
 
 -- XYZ
 library ieee;
-use ieee.std_logic_1164.all;       
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity paddle is
    port(clk: in std_logic;
         hsync: in std_logic;
         value: in std_logic_vector(7 downto 0);
-        rst: in std_logic;       
+        rst: in std_logic;
         o: out std_logic
      );
 end paddle;
@@ -449,12 +449,12 @@ begin
 end arch;
 
 library ieee;
-use ieee.std_logic_1164.all;       
+use ieee.std_logic_1164.all;
 
 entity ball is
-   port(clk: in std_logic;        
+   port(clk: in std_logic;
           prst: in std_logic;
-          count: in std_logic;        
+          count: in std_logic;
           ennew: in std_logic;
           enold: in std_logic;
           vdel: in std_logic;
@@ -468,14 +468,13 @@ architecture arch of ball is
     signal lfsr_out: std_logic_vector(5 downto 0);
     signal lfsr_rst: std_logic;
     signal lfsr_cnt: std_logic;
-    
+
     signal cntr_out: std_logic_vector(1 downto 0);
     signal cntr_rst: std_logic;
-    signal cntr_en: std_logic;          
-    
-    signal start1: std_logic := '0';    
+    signal cntr_en: std_logic;
+
+    signal start1: std_logic := '0';
     signal start2: std_logic := '0';
-    
 
     signal ph1: std_logic;
     signal ph1_edge: std_logic;
@@ -484,44 +483,44 @@ begin
 
     lfsr: work.lfsr6 port map(clk, lfsr_rst, lfsr_cnt, lfsr_out);
     cntr: work.cntr2 port map(clk, cntr_rst, cntr_en, cntr_out);
-    
+
     ph1_edge <= '1' when (cntr_out = "10") else '0';
     ph1 <= '1' when (cntr_out = "11") else '0';
-    
+
     cntr_rst <= prst;
     cntr_en <= count;
-    
-    lfsr_rst <= '1' when (lfsr_out = "101101") or (lfsr_out = "111111") or (prst = '1') else '0';       
+
+    lfsr_rst <= '1' when (lfsr_out = "101101") or (lfsr_out = "111111") or (prst = '1') else '0';
     lfsr_cnt <= '1' when (ph1_edge = '1') and (count = '1') else '0';
-    
+
     process(clk)
     begin 
-        if (clk'event and clk = '1') then           
-            if (ph1_edge = '1') then            
+        if (clk'event and clk = '1') then
+            if (ph1_edge = '1') then
                 if (lfsr_out = "101101") or (prst = '1') then
-                    start1 <= '1';                  
-                else 
+                    start1 <= '1';
+                else
                     start1 <= '0';
                 end if;
-                
+
                 start2 <= start1;
             end if;
         end if;
-    end process;            
-                
+    end process;
+
     pix <= '1' when 
         ((ennew = '1' and vdel = '0') or (enold = '1' and vdel = '1')) and (
             (start1 = '1' and (
                 (size(1) = '1') or 
                 (ph1 = '1') or 
                 (cntr_out(0) = '1' and size(0) = '1'))) or
-            (start2 = '1' and size = "11"))                         
-        else '0';                                               
+            (start2 = '1' and size = "11"))
+        else '0';
 
 end arch;
 
 library ieee;
-use ieee.std_logic_1164.all;       
+use ieee.std_logic_1164.all;
 
 entity mux20 is 
     port(i: in std_logic_vector(19 downto 0);
@@ -553,12 +552,12 @@ begin
         i(17) when "10001",
         i(18) when "10010",
         i(19) when "10011",
-        '-' when others;            
+        '-' when others;
 end arch;
 
 library ieee;
-use ieee.std_logic_1164.all;       
-use ieee.numeric_std.all;      
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 use work.TIA_common.all;
 use work.TIA_NTSCLookups.all;
@@ -725,14 +724,14 @@ architecture arch of TIA is
     signal col_lu: unsigned(7 downto 0);
 
     signal vid_clk_dvdr: unsigned(2 downto 0) := "000";
-	 
-	  signal vga_colu: std_logic_vector(6 downto 0);
 
-     signal inpt03_chg: std_logic;
-	  signal inpt0: std_logic;
-	  signal inpt1: std_logic;
-	  signal inpt2: std_logic;
-	  signal inpt3: std_logic;
+    signal vga_colu: std_logic_vector(6 downto 0);
+
+    signal inpt03_chg: std_logic;
+    signal inpt0: std_logic;
+    signal inpt1: std_logic;
+    signal inpt2: std_logic;
+    signal inpt3: std_logic;
 
     signal floating_bus: std_logic_vector(7 downto 0);
 
@@ -900,33 +899,33 @@ begin
                     d(6) <= 'Z';
                 when A_CXPPMM =>
                     d(7 downto 6) <= cx(14 downto 13);
-					 when A_INPT0 =>
-						  if(paddle_ena = '1') then
-								d(7) <= inpt0;
-						  else
-						 		d(7) <= '1';
-						  end if;
+                when A_INPT0 =>
+                    if(paddle_ena = '1') then
+                        d(7) <= inpt0;
+                    else
+                        d(7) <= '1';
+                    end if;
                     d(6) <= '0';
                 when A_INPT1 =>
-						  if(paddle_ena = '1') then
-								d(7) <= inpt1;
-						  else
-						 		d(7) <= '1';
-						  end if;
+                    if(paddle_ena = '1') then
+                        d(7) <= inpt1;
+                    else
+                        d(7) <= '1';
+                    end if;
                     d(6) <= '0';
                 when A_INPT2 =>
-						  if(paddle_ena = '1') then
-								d(7) <= inpt2;
-						  else
-						 		d(7) <= '1';
-						  end if;
+                    if(paddle_ena = '1') then
+                        d(7) <= inpt2;
+                    else
+                        d(7) <= '1';
+                    end if;
                     d(6) <= '0';
                 when A_INPT3 =>
-						  if(paddle_ena = '1') then
-								d(7) <= inpt3;
-						  else
-						 		d(7) <= '1';
-						  end if;
+                    if(paddle_ena = '1') then
+                        d(7) <= inpt3;
+                    else
+                        d(7) <= '1';
+                    end if;
                     d(6) <= '0';
                 when A_INPT4 =>
                     if (inpt45_len = '1') then
@@ -1260,14 +1259,12 @@ begin
     blank <= hblank or vblank;
 
     vga_colu <= int_colu;
-	Inst_VGAColorTable: work.VGAColorTable PORT MAP(
-		clk => vid_clk,
-		lum => '0' & vga_colu(2 downto 0),
-		hue => vga_colu(6 downto 3),
-		mode => '0' & pal,	-- 00 = NTSC, 01 = PAL
-		outColor => rgbx2
-	);	
-		
-
+        Inst_VGAColorTable: work.VGAColorTable PORT MAP(
+            clk => vid_clk,
+            lum => '0' & vga_colu(2 downto 0),
+            hue => vga_colu(6 downto 3),
+            mode => '0' & pal,-- 00 = NTSC, 01 = PAL
+            outColor => rgbx2
+            );
 
 end arch;
