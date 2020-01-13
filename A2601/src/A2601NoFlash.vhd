@@ -97,7 +97,9 @@ architecture arch of A2601NoFlash is
     signal sys_clk_dvdr: unsigned(4 downto 0) := "00000";
 
     signal ph0: std_logic;
+    signal ph0_en: std_logic;
     signal ph2: std_logic;
+    signal ph2_en: std_logic;
 
     signal rgbx2: std_logic_vector(23 downto 0);
     signal hsyn: std_logic;
@@ -171,7 +173,7 @@ architecture arch of A2601NoFlash is
     signal DpcRandom : std_logic_vector(7 downto 0) := x"01";
     signal DpcWrite : std_logic := '0';
     signal DpcClocks : unsigned(15 downto 0) := (others=>'0');
-    signal clk_music : unsigned(3 downto 0) := (others=>'0');	 -- 3 é o melhor
+    signal clk_music : unsigned(3 downto 0) := (others=>'0');	 -- 3 Ã© o melhor
     signal DpcClockDivider : unsigned(9 downto 0);
 
 begin
@@ -204,7 +206,9 @@ begin
         av0         => av0,
         av1         => av1,
         ph0_out     => ph0,
+        ph0_en_out  => ph0_en,
         ph2_out     => ph2,
+        ph2_en_out  => ph2_en,
         pal         => pal);
 
     dac_inst: work.dac 
@@ -220,9 +224,9 @@ begin
     O_HSYNC   <= hsyn;
     O_VSYNC   <= vsyn;
 
-    process(ph0)
+    process(clk, ph0_en)
     begin
-        if (ph0'event and ph0 = '1') then
+        if rising_edge(clk) and ph0_en = '1' then
             if res = '1' then
                 rst <= '1';
             else
@@ -231,9 +235,9 @@ begin
         end if;
     end process;
 
-    process(ph0)
+    process(clk, ph0_en)
     begin
-        if (ph0'event and ph0 = '1') then
+        if rising_edge(clk) and ph0_en = '1' then
             ctrl_cntr <= ctrl_cntr + 1;
             if (ctrl_cntr = "1111") then
                 p_fn <=  p_a;
@@ -375,11 +379,11 @@ begin
         "0111" & cpu_a(10 downto 0) when (cpu_a(12 downto 11) = "11" or cpu_a(12 downto 10) = "101") and bss = BANKE7 else
           bank(2 downto 0) & cpu_a(11 downto 0);
 
-    bankswch: process(ph0)
+    bankswch: process(clk, ph0_en)
         variable w_index_v :integer; 
         variable addr_v :std_logic_vector(12 downto 0); 
     begin
-        if (ph0'event and ph0 = '1') then
+        if rising_edge(clk) and ph0_en = '1' then
             if (rst = '1') then
                 bank <= "0000";
                 e0_bank0 <= "000";

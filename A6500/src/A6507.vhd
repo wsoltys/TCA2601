@@ -24,6 +24,7 @@ use ieee.numeric_std.ALL;
 
 entity A6507 is 
     port(clk: in std_logic;       
+         clk_en: in std_logic;
          rst: in std_logic;
          rdy: in std_logic;
          d: inout std_logic_vector(7 downto 0);
@@ -52,7 +53,7 @@ begin
 	port map (
 		Mode => "00",
 		Res_n => not rst,
-		Enable => rdy or cpuWe,
+		Enable => clk_en and (rdy or cpuWe),
 		Clk => clk,
 		Rdy => '1',
 		Abort_n => '1',

@@ -577,7 +577,9 @@ entity TIA is
          cv: out std_logic_vector(7 downto 0) := "00000000";
          rdy: out std_logic;
          ph0: out std_logic;
+         ph0_en: out std_logic;
          ph2: out std_logic;
+         ph2_en: out std_logic;
          au0: out std_logic;
          au1: out std_logic;
          av0: out std_logic_vector(3 downto 0);
@@ -695,8 +697,10 @@ architecture arch of TIA is
 
     signal clk_dvdr: std_logic_vector(1 downto 0) := "01";
     signal phi0: std_logic := '0';
+    signal phi0_en: std_logic := '0';
     signal phi2: std_logic := '1';
-    signal phi2_d: std_logic := '1';
+    signal phi2_d: std_logic;
+    signal phi2_en: std_logic;
 
     signal inpt45_len: std_logic := '0';
     signal inpt45_rst: std_logic;
@@ -956,6 +960,7 @@ begin
             end if;
 
             phi2_d <= phi2;
+            -- phi2_en doesn't work well here
             if (r = '0') and (cs = '1') and (phi2_d = '0' and phi2 = '1') then
                 case a is
                     when A_VSYNC =>
@@ -1108,7 +1113,7 @@ begin
     begin
 
         if (clk'event and clk = '1') then
-            if (hh0 = '1') then
+            if (hh1_edge = '1') then
                 if (sec = '1') then
                     hmove_cntr <= hmove_cntr + 1;
                 end if;
@@ -1212,11 +1217,15 @@ begin
 
     ph0 <= phi0;
     ph2 <= phi2;
+    ph0_en <= phi0_en;
+    ph2_en <= phi2_en;
 
     process(clk)
     begin
         if (clk'event and clk = '1') then
             phi2<=phi0;
+            phi0_en <= '0';
+            phi2_en <= phi0_en;
             if (h_lfsr_out = "010100" and hh1_edge = '1') then
                 clk_dvdr <= "01";
                 phi0 <= '0';
@@ -1227,6 +1236,7 @@ begin
                         phi0 <= '0';
                     when "01" =>
                         clk_dvdr <= "11";
+                        phi0_en <= '1';
                         phi0 <= '0';
                     when "11" =>
                         clk_dvdr <= "00";
