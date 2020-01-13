@@ -142,6 +142,7 @@ architecture arch of A2601NoFlash is
     constant BANKFA: bss_type := "1000";
     constant BANKCV: bss_type := "1001";
     constant BANKE7: bss_type := "1010";
+    constant BANKUA: bss_type := "1011";
 
     signal bss: bss_type := BANK00; 	--bank switching method
 
@@ -361,7 +362,7 @@ begin
 
     rom_a <=
          "000" & cpu_a(11 downto 0) when bss = BANK00 else
-          "00" & bank(0) & cpu_a(11 downto 0) when bss = BANKF8 else
+          "00" & bank(0) & cpu_a(11 downto 0) when bss = BANKF8 or bss = BANKUA else
            "0" & bank(1 downto 0) & cpu_a(11 downto 0) when bss = BANKF6 else
           bank(2 downto 0) & cpu_a(11 downto 0) when bss = BANKF4 else
           "00" & bank(0) & cpu_a(11 downto 0) when bss = BANKFE else
@@ -543,6 +544,12 @@ begin
                         end if;
                         if cpu_a(11 downto 4) = X"FE" and cpu_a(3 downto 2) = "10" then
                             e7_rambank <= cpu_a(1 downto 0); -- FE8-FEB
+                        end if;
+                    when BANKUA =>
+                        if (cpu_a = "0" & X"220") then
+                            bank(0) <= '0';
+                        elsif (cpu_a = "0" & X"240") then
+                            bank(0) <= '1';
                         end if;
                     when others =>
                         null;
