@@ -22,48 +22,47 @@ use ieee.numeric_std.ALL;
 
 --use work.types.all;
 
-entity A6507 is 
+entity A6502 is 
     port(clk: in std_logic;       
-         clk_en: in std_logic;
          rst: in std_logic;
          rdy: in std_logic;
          d: inout std_logic_vector(7 downto 0);
-         ad: out std_logic_vector(12 downto 0);
+         ad: out std_logic_vector(15 downto 0);
          r: out std_logic);
-end A6507;
+end A6502;
 
-architecture arch of A6507 is
+architecture arch of A6502 is
 
     signal ad_full: unsigned(23 downto 0);
     signal cpuDi: std_logic_vector(7 downto 0);
     signal cpuDo: unsigned(7 downto 0);
     signal cpuWe: std_logic;
-	signal cpuWe_n: std_logic;
+    signal cpuWe_n: std_logic;
 
 begin
 
-    ad <= std_logic_vector(ad_full(12 downto 0));
+    ad <= std_logic_vector(ad_full(15 downto 0));
     r <= not cpuWe;
-	cpuWe <= not cpuWe_n;
+    cpuWe <= not cpuWe_n;
     
     cpuDi <= d when cpuWe = '0' else std_logic_vector(cpuDo);
     d <= std_logic_vector(cpuDo) when cpuWe = '1' else "ZZZZZZZZ";
 
-	cpu: entity work.t65
-	port map (
-		Mode => "00",
-		Res_n => not rst,
-		Enable => clk_en and (rdy or cpuWe),
-		Clk => clk,
-		Rdy => '1',
-		Abort_n => '1',
-		IRQ_n => '1',
-		NMI_n => '1',
-		SO_n => '1',
-		R_W_n => cpuWe_n,
-		unsigned(A) => ad_full,
-		DI => cpuDi,
-		unsigned(DO) => cpuDo
-	);
+    cpu: entity work.t65
+    port map (
+        Mode => "00",
+        Res_n => not rst,
+        Enable => rdy or cpuWe,
+        Clk => clk,
+        Rdy => '1',
+        Abort_n => '1',
+        IRQ_n => '1',
+        NMI_n => '1',
+        SO_n => '1',
+        R_W_n => cpuWe_n,
+        unsigned(A) => ad_full,
+        DI => cpuDi,
+        unsigned(DO) => cpuDo
+);
 
 end arch;

@@ -55,7 +55,7 @@ use ieee.std_logic_unsigned.all;
 
 entity A6532 is
     port(clk: in std_logic;
-         ph2: in std_logic;
+         ph2_en: in std_logic;
          r: in std_logic;
          rs: in std_logic;
          cs: in std_logic;
@@ -96,17 +96,7 @@ architecture arch of A6532 is
     signal ram_d_out: std_logic_vector(7 downto 0);
     signal ram_r: std_logic;
 
-    signal ph2_d: std_logic;
-    signal ph2_rise: std_logic;
-
 begin
-    ph2_rise <= '1' when ph2_d = '0' and ph2 = '1' else '0';
-
-    process(clk) begin
-        if rising_edge(clk) then
-            ph2_d <= ph2;
-        end if;
-    end process;
 
     io: for i in 0 to 7 generate
         -- TEMPORARY FIX
@@ -129,7 +119,7 @@ begin
     irq <= not ((timer_intr and timer_irq_en) or (edge_intr and edge_irq_en));
     edge_intr <= edge_intr_lo when edge_pol = '0' else edge_intr_hi;
 
-    process(clk, ph2_rise, cs, r, rs, a, ram_d_out, pa_in, pa_ddr, pb_in, pb_ddr, timer, timer_intr, edge_intr)
+    process(clk, ph2_en, cs, r, rs, a, ram_d_out, pa_in, pa_ddr, pb_in, pb_ddr, timer, timer_intr, edge_intr)
     begin
         if r = '1' then
             if (cs = '0') then
@@ -158,7 +148,7 @@ begin
             end if;
         else
             d <= "ZZZZZZZZ";
-            if (clk'event and clk = '1' and cs = '1' and ph2_rise = '1') then
+            if (clk'event and clk = '1' and cs = '1' and ph2_en = '1') then
                 if (rs = '1') then
                     if a(2) = '0' then
                         case a(1 downto 0) is
@@ -204,9 +194,9 @@ begin
         timer_dvdr(10) when "11",
         '-' when others;
 
-    process(clk, ph2_rise)
+    process(clk, ph2_en)
     begin
-        if (clk'event and clk = '1' and ph2_rise = '1') then
+        if (clk'event and clk = '1' and ph2_en = '1') then
             if (timer_inc = '1') then
                 timer_dvdr <= "00000000001";
             else
@@ -214,7 +204,7 @@ begin
             end if;
 
             if (timer_write = '1') then
-                timer <= d;
+                timer <= d - 1;
                 timer_intvl <= a(1 downto 0);
                 timer_irq_en <= a(3);
                 timer_dvdr <= "00000000001";

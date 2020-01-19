@@ -41,7 +41,7 @@ set_global_assignment -name DEVICE EP3C25E144C8
 set_global_assignment -name TOP_LEVEL_ENTITY main
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "12.0 SP2"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "16:03:22  OCTOBER 26, 2012"
-set_global_assignment -name LAST_QUARTUS_VERSION 13.0
+set_global_assignment -name LAST_QUARTUS_VERSION 13.1
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name DEVICE_FILTER_PACKAGE TQFP
@@ -214,40 +214,39 @@ set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME MyComputer_testbench -sec
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name VHDL_FILE ../YaGraphCon/MyComputer_testbench.vhd
-set_global_assignment -name VHDL_FILE ../YaGraphCon/OutputGenerator.vhd
-set_global_assignment -name VHDL_FILE ../YaGraphCon/Framebuffer.vhd
-set_global_assignment -name VHDL_FILE ../YaGraphCon/GraphicsAccelerator.vhd
-set_global_assignment -name VHDL_FILE ../YaGraphCon/YaGraphConPackage.vhd
-set_global_assignment -name VHDL_FILE ../YaGraphCon/YaGraphCon.vhd
-set_global_assignment -name VHDL_FILE ../YaGraphCon/MyComputer.vhd
-set_global_assignment -name VHDL_FILE ../chameleon/main_testbench.vhd
-set_global_assignment -name VHDL_FILE ../TIA/src/NTSCLookups.vhd
-set_global_assignment -name VHDL_FILE ../TIA/src/Common.vhd
-set_global_assignment -name VHDL_FILE ../A2601/src/pacman_dblscan.vhd
-set_global_assignment -name VHDL_FILE ../TIA/src/TIA.vhd
-set_global_assignment -name VHDL_FILE ../A6532/src/A6532.vhd
-set_global_assignment -name VHDL_FILE ../A6500/src/Types.vhd
-set_global_assignment -name VHDL_FILE ../A6500/src/FSM.vhd
-set_global_assignment -name VHDL_FILE ../A6500/src/Datapath.vhd
-set_global_assignment -name VHDL_FILE ../A6500/src/ALU.vhd
-set_global_assignment -name VHDL_FILE ../A6500/src/A6507.vhd
-set_global_assignment -name VHDL_FILE ../A6500/src/A6502.vhd
-set_global_assignment -name VHDL_FILE ../A6500/src/A6500.vhd
-set_global_assignment -name VHDL_FILE ../A2601/src/A2601NoFlash.vhd
-set_global_assignment -name VHDL_FILE ../A2601/src/A2601Core.vhd
-set_global_assignment -name VHDL_FILE ../chameleon/chameleon_docking_station.vhd
-set_global_assignment -name VHDL_FILE ../chameleon/chameleon_led.vhd
-set_global_assignment -name VHDL_FILE ../chameleon/chameleon_1mhz.vhd
-set_global_assignment -name VHDL_FILE ../chameleon/chameleon_1khz.vhd
-set_global_assignment -name VHDL_FILE ../chameleon/pll8.vhd
-set_global_assignment -name VHDL_FILE ../chameleon/main.vhd
-set_global_assignment -name QIP_FILE ../A2601/src/vga_framebuffer.qip
-set_global_assignment -name QIP_FILE ../A2601/src/cart_rom.qip
-set_global_assignment -name QIP_FILE ../chameleon/pll8.qip
-set_global_assignment -name VHDL_FILE ../TIA/src/VGAColorTable.vhd
-set_global_assignment -name VHDL_FILE ../A2601/src/DeltaSigma.vhd
-set_global_assignment -name QIP_FILE ../YaGraphCon/cpuRAM.qip
 set_global_assignment -name EDA_TEST_BENCH_FILE ../chameleon/main_testbench.vhd -section_id main_testbench
 set_global_assignment -name EDA_TEST_BENCH_FILE ../YaGraphCon/MyComputer_testbench.vhd -section_id MyComputer_testbench
+set_global_assignment -name VHDL_FILE YaGraphCon/MyComputer_testbench.vhd
+set_global_assignment -name VHDL_FILE YaGraphCon/OutputGenerator.vhd
+set_global_assignment -name VHDL_FILE YaGraphCon/Framebuffer.vhd
+set_global_assignment -name VHDL_FILE YaGraphCon/GraphicsAccelerator.vhd
+set_global_assignment -name VHDL_FILE YaGraphCon/YaGraphConPackage.vhd
+set_global_assignment -name VHDL_FILE YaGraphCon/YaGraphCon.vhd
+set_global_assignment -name VHDL_FILE YaGraphCon/MyComputer.vhd
+set_global_assignment -name VHDL_FILE main_testbench.vhd
+set_global_assignment -name VHDL_FILE ../TIA/src/NTSCLookups.vhd
+set_global_assignment -name VHDL_FILE ../TIA/src/Common.vhd
+set_global_assignment -name VHDL_FILE pacman_dblscan.vhd
+set_global_assignment -name VHDL_FILE ../TIA/src/TIA.vhd
+set_global_assignment -name VHDL_FILE ../A6532/src/A6532.vhd
+set_global_assignment -name VHDL_FILE ../A6500/src/A6507.vhd
+set_global_assignment -name VHDL_FILE ../A6500/src/A6502.vhd
+set_global_assignment -name VHDL_FILE ../A2601/src/A2601NoFlash.vhd
+set_global_assignment -name VHDL_FILE ../A2601/src/A2601Core.vhd
+set_global_assignment -name QIP_FILE ../T65/t65.qip
+set_global_assignment -name VHDL_FILE chameleon_docking_station.vhd
+set_global_assignment -name VHDL_FILE chameleon_led.vhd
+set_global_assignment -name VHDL_FILE chameleon_1mhz.vhd
+set_global_assignment -name VHDL_FILE chameleon_1khz.vhd
+set_global_assignment -name VHDL_FILE main.vhd
+set_global_assignment -name QIP_FILE vga_framebuffer.qip
+set_global_assignment -name QIP_FILE cart_rom.qip
+set_global_assignment -name QIP_FILE pll8.qip
+set_global_assignment -name VHDL_FILE ../TIA/src/VGAColorTable.vhd
+set_global_assignment -name VHDL_FILE ../A2601/src/DeltaSigma.vhd
+set_global_assignment -name QIP_FILE cpuRAM.qip
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY out
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

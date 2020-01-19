@@ -355,6 +355,7 @@ begin
     elsif file_ext(23 downto 8) = x"4641" or file_ext(23 downto 8) = x"6661" then force_bs <= "1000"; -- FA
     elsif file_ext(23 downto 8) = x"4356" or file_ext(23 downto 8) = x"6376" then force_bs <= "1001"; -- CV
     elsif file_ext(23 downto 8) = x"4537" or file_ext(23 downto 8) = x"6537" then force_bs <= "1010"; -- E7
+    elsif file_ext(23 downto 8) = x"5541" or file_ext(23 downto 8) = x"7561" then force_bs <= "1011"; -- UA
     end if;
   end process;
 
