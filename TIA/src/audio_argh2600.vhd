@@ -57,7 +57,7 @@ signal lfsr5_edge : std_logic;
 signal div31_edge, div6_edge : std_logic;
 
 begin
-	process(clk)
+	process(clk, clk_audio)
 
 	-- prescalers
 	begin
@@ -119,7 +119,7 @@ begin
 	-- F					1	1	1	1	5-bit poly ÷ 6
 
 
-	process (ctrl)
+	process (ctrl, toggled, lfsr4_out, lfsr5_out, lfsr9_out, lfsr5_edge, div31_edge, div6_edge)
 	begin
 
 		lfsr4_clk_audio <= '1';
