@@ -55,7 +55,7 @@ entity MA2601 is
       AUDIO_R : out std_logic;
 
 -- SDRAM
-      SDRAM_nCAS : out std_logic
+      SDRAM_nCS : out std_logic
     );
 end entity;
 
@@ -112,14 +112,18 @@ architecture rtl of MA2601 is
   signal ps2_scancode : std_logic_vector(7 downto 0);
   signal scandoubler_disable : std_logic;
   signal ypbpr      : std_logic;
+  signal no_csync   : std_logic;
 
 -- Data IO
   signal downl      : std_logic;
   signal index      : std_logic_vector(7 downto 0);
-  signal file_ext   : std_logic_vector(31 downto 0);
+  signal file_ext   : std_logic_vector(23 downto 0);
   signal rom_a      : std_logic_vector(14 downto 0);
   signal rom_do     : std_logic_vector(7 downto 0);
   signal rom_size   : std_logic_vector(15 downto 0);
+  signal rom_wr_a   : std_logic_vector(24 downto 0);
+  signal rom_wr     : std_logic;
+  signal rom_di     : std_logic_vector(7 downto 0);
 
   -- config string used by the io controller to fill the OSD
   constant CONF_STR : string :=
@@ -148,21 +152,25 @@ architecture rtl of MA2601 is
     return rval;
 
   end function;
-  
-  component data_io is
-    port(sck: in std_logic;
-        ss: in std_logic;
-        sdi: in std_logic;
-        downloading: out std_logic;
-        size: out std_logic_vector(15 downto 0);
-        index: out std_logic_vector(7 downto 0);
-        file_ext: out std_logic_vector(31 downto 0);
-        clk: in std_logic;
-        we: in std_logic;
-        a: in std_logic_vector(14 downto 0);
-        din: in std_logic_vector(7 downto 0);
-        dout: out std_logic_vector(7 downto 0));
-    end component;
+
+  component data_io
+  generic
+  (
+    ROM_DIRECT_UPLOAD : boolean := false
+  );
+  port
+  (
+    clk_sys : in std_logic;
+    SPI_SCK, SPI_SS2, SPI_DI :in std_logic;
+    clkref_n          : in  std_logic := '0';
+    ioctl_download    : out std_logic;
+    ioctl_index       : out std_logic_vector(7 downto 0);
+    ioctl_fileext     : out std_logic_vector(23 downto 0);
+    ioctl_wr          : out std_logic;
+    ioctl_addr        : out std_logic_vector(24 downto 0);
+    ioctl_dout        : out std_logic_vector(7 downto 0)
+  );
+  end component;
 
 begin
 
@@ -170,7 +178,7 @@ begin
 -- MiST
 -- -----------------------------------------------------------------------
 
-  SDRAM_nCAS <= '1'; -- disable ram
+  SDRAM_nCS <= '1'; -- disable ram
   res <= status(0) or buttons(1) or downl;
   p_color <= not status(2);
   pal <= status(1);
@@ -232,6 +240,7 @@ begin
         rotate      => "00",
         scandoubler_disable => scandoubler_disable,
         ypbpr       => ypbpr,
+        no_csync => no_csync,
 
         SPI_SCK     => SPI_SCK,
         SPI_SS3     => SPI_SS3,
@@ -329,6 +338,7 @@ begin
       buttons  => buttons,
       scandoubler_disable => scandoubler_disable,
       ypbpr => ypbpr,
+      no_csync => no_csync,
       joystick_1 => joy0,
       joystick_0 => joy1,
       joystick_analog_1 => joy_a_0,
@@ -340,7 +350,34 @@ begin
     );
 
   data_io_inst: data_io
-        port map(SPI_SCK, SPI_SS2, SPI_DI, downl, rom_size, index, file_ext, vid_clk, '0', rom_a, (others=>'0'), rom_do);
+    port map (
+      clk_sys => vid_clk,
+      SPI_SCK => SPI_SCK,
+      SPI_SS2 => SPI_SS2,
+      SPI_DI => SPI_DI,
+      ioctl_download => downl,
+      ioctl_index    => index,
+      ioctl_fileext  => file_ext,
+      ioctl_wr       => rom_wr,
+      ioctl_addr     => rom_wr_a,
+      ioctl_dout     => rom_di
+    );
+
+  rom_inst: entity work.data_io_ram
+    port map (
+      -- wire up cpu port
+      rdaddress => rom_a,
+      rdclock => clk,
+      q => rom_do,
+
+      -- io controller port
+      wraddress => rom_wr_a(14 downto 0),
+      wrclock => vid_clk,
+      data => rom_di,
+      wren => rom_wr
+    );
+
+  rom_size <= std_logic_vector(unsigned('0'&rom_wr_a(14 downto 0)) + 1);
 
   -- 2nd menu index - load with SuperChip support OR 3rd character in extension is 's'
   sc <= '1' when index(1) = '1' or file_ext(7 downto 0) = x"53" or file_ext(7 downto 0) = x"73" else '0';
