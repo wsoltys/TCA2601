@@ -930,7 +930,7 @@ begin
                     d(7 downto 6) <= cx(11 downto 10);
                 when A_CXBLPF =>
                     d(7) <= cx(12);
-                    d(6) <= 'Z';
+                    d(6) <= floating_bus(6);
                 when A_CXPPMM =>
                     d(7 downto 6) <= cx(14 downto 13);
                 when A_INPT0 =>
@@ -1215,7 +1215,7 @@ begin
         if (clk'event and clk = '1') then
             if (cx_clr = '1') then
                 cx <= "000000000000000";
-            else
+            elsif hblank = '0' and vblank = '0' then
                 if (m0_pix = '1' and p0_pix = '1') then
                     cx(0) <= '1';
                 end if;
