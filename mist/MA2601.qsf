@@ -304,7 +304,7 @@ set_global_assignment -name VHDL_FILE MA2601.vhd
 set_global_assignment -name VHDL_FILE data_io_ram.vhd
 set_global_assignment -name VERILOG_FILE "mist-modules/data_io.v"
 set_global_assignment -name QIP_FILE "mist-modules/mist_core.qip"
-set_global_assignment -name QIP_FILE ../T65/t65.qip
+set_global_assignment -name QIP_FILE ../T65/T65.qip
 set_global_assignment -name VHDL_FILE ../A6532/src/A6532.vhd
 set_global_assignment -name VHDL_FILE ../A6500/src/A6507.vhd
 set_global_assignment -name VHDL_FILE ../A2601/src/A2601NoFlash.vhd
