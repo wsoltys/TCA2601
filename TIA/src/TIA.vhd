@@ -525,13 +525,41 @@ use ieee.std_logic_1164.all;
 entity mux20 is 
     port(i: in std_logic_vector(19 downto 0);
           a: in std_logic_vector(4 downto 0);
+          rev: in std_logic;
           o: out std_logic
          );
 end mux20; 
 
 architecture arch of mux20 is 
+  signal out_fwd: std_logic;
+  signal out_rev: std_logic;
 begin
-    with a select o <=
+    o <= out_fwd when rev = '0' else out_rev;
+
+    with a select out_rev <=
+        i(19) when "00000",
+        i(18) when "00001",
+        i(17) when "00010",
+        i(16) when "00011",
+        i(15) when "00100",
+        i(14) when "00101",
+        i(13) when "00110",
+        i(12) when "00111",
+        i(4) when "01000",
+        i(5) when "01001",
+        i(6) when "01010",
+        i(7) when "01011",
+        i(8) when "01100",
+        i(9) when "01101",
+        i(10) when "01110",
+        i(11) when "01111",
+        i(3) when "10000",
+        i(2) when "10001",
+        i(1) when "10010",
+        i(0) when "10011",
+        '-' when others;
+
+    with a select out_fwd <=
         i(0) when "00000",
         i(1) when "00001",
         i(2) when "00010",
@@ -553,6 +581,7 @@ begin
         i(18) when "10010",
         i(19) when "10011",
         '-' when others;
+
 end arch;
 
 library ieee;
@@ -671,6 +700,7 @@ architecture arch of TIA is
     signal pf_pix: std_logic;
     signal pf_mux_out: std_logic;
     signal pf_reflect: std_logic;
+    signal pf_reverse: std_logic;
     signal pf_score: std_logic;
     signal pf_priority: std_logic := '0';
     signal pf_colu: std_logic_vector(6 downto 0) := "0000000";
@@ -747,7 +777,7 @@ begin
 
     h_cntr: work.cntr2 port map(clk, h_cntr_rst, '1', h_cntr_out);
     lfsr: work.lfsr6 port map(clk, h_lfsr_rst, h_lfsr_cnt, h_lfsr_out);
-    pf_mux: work.mux20 port map(pf_gr, std_logic_vector(pf_adr), pf_mux_out);
+    pf_mux: work.mux20 port map(pf_gr, std_logic_vector(pf_adr), pf_reverse, pf_mux_out);
 
     hh0_edge <= '1' when (h_cntr_out = "01") else '0';
     hh0 <= '1' when (h_cntr_out = "00") else '0';
@@ -847,15 +877,15 @@ begin
         if (clk'event and clk = '1') then
             if (h_lfsr_cnt = '1') then
                 if (pf_cnt = '1') then
-                    if (pf_adr = "10011") and (center = '0') and (pf_reflect = '0') then
+                    if (pf_adr = "10011") then
                         pf_adr <= "00000";
-                    elsif (pf_reflect = '1') and (center = '1') and not (pf_adr = "00000") then
-                        pf_adr <= pf_adr - 1;
+                        pf_reverse <= pf_reflect;
                     elsif not (pf_adr = "10011") then
                         pf_adr <= pf_adr + 1;
                     end if;
                 else
                     pf_adr <= "00000";
+                    pf_reverse <= '0';
                 end if;
 
                 pf_pix <= pf_mux_out;
