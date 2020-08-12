@@ -1068,7 +1068,15 @@ begin
                 elsif (p1_pix = '1' or m1_pix = '1') then
                     int_colu <= p1_colu;
                 elsif (pf_pix = '1' or bl_pix = '1') then
-                    int_colu <= pf_colu;
+                    if pf_pix = '1' and pf_score = '1' then
+                        if center = '0' then
+                            int_colu <= p0_colu;
+                        else
+                            int_colu <= p1_colu;
+                        end if;
+                    else
+                        int_colu <= pf_colu;
+                    end if;
                 else
 --                    int_colu <= "0110010";
                     int_colu <= bk_colu;
@@ -1079,7 +1087,15 @@ begin
                 elsif (p0_pix = '1' or m0_pix = '1') then
                     int_colu <= p0_colu;
                 elsif (p1_pix = '1' or m1_pix = '1') then
-                    int_colu <= p1_colu;
+                    if pf_pix = '1' and pf_score = '1' then
+                        if center = '0' then
+                            int_colu <= p0_colu;
+                        else
+                            int_colu <= p1_colu;
+                        end if;
+                    else
+                        int_colu <= pf_colu;
+                    end if;
                 else
 --                    int_colu <= "0110010";
                     int_colu <= bk_colu;
