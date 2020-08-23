@@ -1115,15 +1115,7 @@ begin
                 end if;
             else
                 if (pf_pix = '1') then
-                    if pf_score = '1' then
-                        if center = '0' then
-                            int_colu <= p0_colu;
-                        else
-                            int_colu <= p1_colu;
-                        end if;
-                    else
-                        int_colu <= pf_colu;
-                    end if;
+                    int_colu <= pf_colu;
                 elsif (bl_pix = '1') then
                     int_colu <= pf_colu;
                 elsif (p0_pix = '1' or m0_pix = '1') then
