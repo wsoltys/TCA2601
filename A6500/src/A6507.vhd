@@ -53,9 +53,9 @@ begin
 	port map (
 		Mode => "00",
 		Res_n => not rst,
-		Enable => clk_en and (rdy or cpuWe),
+		Enable => clk_en,-- and (rdy or cpuWe),
 		Clk => clk,
-		Rdy => '1',
+		Rdy => rdy,--'1',
 		Abort_n => '1',
 		IRQ_n => '1',
 		NMI_n => '1',

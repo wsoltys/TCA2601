@@ -525,13 +525,41 @@ use ieee.std_logic_1164.all;
 entity mux20 is 
     port(i: in std_logic_vector(19 downto 0);
           a: in std_logic_vector(4 downto 0);
+          rev: in std_logic;
           o: out std_logic
          );
 end mux20; 
 
 architecture arch of mux20 is 
+  signal out_fwd: std_logic;
+  signal out_rev: std_logic;
 begin
-    with a select o <=
+    o <= out_fwd when rev = '0' else out_rev;
+
+    with a select out_rev <=
+        i(19) when "00000",
+        i(18) when "00001",
+        i(17) when "00010",
+        i(16) when "00011",
+        i(15) when "00100",
+        i(14) when "00101",
+        i(13) when "00110",
+        i(12) when "00111",
+        i(4) when "01000",
+        i(5) when "01001",
+        i(6) when "01010",
+        i(7) when "01011",
+        i(8) when "01100",
+        i(9) when "01101",
+        i(10) when "01110",
+        i(11) when "01111",
+        i(3) when "10000",
+        i(2) when "10001",
+        i(1) when "10010",
+        i(0) when "10011",
+        '-' when others;
+
+    with a select out_fwd <=
         i(0) when "00000",
         i(1) when "00001",
         i(2) when "00010",
@@ -553,6 +581,7 @@ begin
         i(18) when "10010",
         i(19) when "10011",
         '-' when others;
+
 end arch;
 
 library ieee;
@@ -620,6 +649,7 @@ architecture arch of TIA is
     signal p0_vdel: std_logic := '0';
     signal p0_pix: std_logic;
     signal p0_colu: std_logic_vector(6 downto 0) := "0000000";
+    signal p0_colu_reg: std_logic_vector(6 downto 0) := "0000000";
     signal p0_hmove: std_logic_vector(3 downto 0);
     signal p0_count: std_logic;
     signal p0_ec: std_logic := '0';
@@ -633,6 +663,7 @@ architecture arch of TIA is
     signal p1_vdel: std_logic := '0';
     signal p1_pix: std_logic;
     signal p1_colu: std_logic_vector(6 downto 0) := "0000000";
+    signal p1_colu_reg: std_logic_vector(6 downto 0) := "0000000";
     signal p1_hmove: std_logic_vector(3 downto 0);
     signal p1_count: std_logic;
     signal p1_ec: std_logic := '0';
@@ -671,11 +702,14 @@ architecture arch of TIA is
     signal pf_pix: std_logic;
     signal pf_mux_out: std_logic;
     signal pf_reflect: std_logic;
+    signal pf_reverse: std_logic;
     signal pf_score: std_logic;
     signal pf_priority: std_logic := '0';
     signal pf_colu: std_logic_vector(6 downto 0) := "0000000";
+    signal pf_colu_reg: std_logic_vector(6 downto 0) := "0000000";
 
     signal bk_colu: std_logic_vector(6 downto 0) := "0000000";
+    signal bk_colu_reg: std_logic_vector(6 downto 0) := "0000000";
 
     signal a0_freq: std_logic_vector(4 downto 0);
     signal a0_ctrl: std_logic_vector(3 downto 0);
@@ -747,15 +781,15 @@ begin
 
     h_cntr: work.cntr2 port map(clk, h_cntr_rst, '1', h_cntr_out);
     lfsr: work.lfsr6 port map(clk, h_lfsr_rst, h_lfsr_cnt, h_lfsr_out);
-    pf_mux: work.mux20 port map(pf_gr, std_logic_vector(pf_adr), pf_mux_out);
+    pf_mux: work.mux20 port map(pf_gr, std_logic_vector(pf_adr), pf_reverse, pf_mux_out);
 
     hh0_edge <= '1' when (h_cntr_out = "01") else '0';
     hh0 <= '1' when (h_cntr_out = "00") else '0';
     hh1_edge <= '1' when (h_cntr_out = "10") else '0';
     hh1 <= '1' when (h_cntr_out = "11") else '0';
 
-    aud0: work.audio port map(clk, au_cnt, a0_freq, a0_ctrl, au0);
-    aud1: work.audio port map(clk, au_cnt, a1_freq, a1_ctrl, au1);
+    aud0: work.audio_argh2600 port map(clk, au_cnt, a0_freq, a0_ctrl, au0);
+    aud1: work.audio_argh2600 port map(clk, au_cnt, a1_freq, a1_ctrl, au1);
 
     av0 <= a0_vol;
     av1 <= a1_vol;
@@ -847,15 +881,15 @@ begin
         if (clk'event and clk = '1') then
             if (h_lfsr_cnt = '1') then
                 if (pf_cnt = '1') then
-                    if (pf_adr = "10011") and (center = '0') and (pf_reflect = '0') then
+                    if (pf_adr = "10011") then
                         pf_adr <= "00000";
-                    elsif (pf_reflect = '1') and (center = '1') and not (pf_adr = "00000") then
-                        pf_adr <= pf_adr - 1;
+                        pf_reverse <= pf_reflect;
                     elsif not (pf_adr = "10011") then
                         pf_adr <= pf_adr + 1;
                     end if;
                 else
                     pf_adr <= "00000";
+                    pf_reverse <= '0';
                 end if;
 
                 pf_pix <= pf_mux_out;
@@ -880,7 +914,8 @@ begin
 
     inpt45_rst <= '1' when (a = A_VBLANK) and (r = '0') and (cs = '1') else '0';
 
-    process(clk, a, d, r, cs, cx, inpt0, inpt1, inpt2, inpt3, inpt45_len, inpt4_l, inpt4, inpt5_l, inpt5, paddle_ena, floating_bus)
+    process(clk, a, d, r, cs, cx, inpt0, inpt1, inpt2, inpt3, inpt45_len, inpt4_l, inpt4, inpt5_l, inpt5, paddle_ena, floating_bus,
+            p0_colu_reg, p1_colu_reg, pf_colu_reg, bk_colu_reg, phi2)
     begin
         if (r = '1') and (cs = '1') then
             d(5 downto 0) <= floating_bus(5 downto 0);
@@ -900,7 +935,7 @@ begin
                     d(7 downto 6) <= cx(11 downto 10);
                 when A_CXBLPF =>
                     d(7) <= cx(12);
-                    d(6) <= 'Z';
+                    d(6) <= floating_bus(6);
                 when A_CXPPMM =>
                     d(7 downto 6) <= cx(14 downto 13);
                 when A_INPT0 =>
@@ -954,13 +989,37 @@ begin
             d <= "ZZZZZZZZ";
         end if;
 
+        -- latch the color registers immediately
+        p0_colu <= p0_colu_reg;
+        p1_colu <= p1_colu_reg;
+        pf_colu <= pf_colu_reg;
+        bk_colu <= bk_colu_reg;
+        if (r = '0') and (cs = '1') and (phi2 = '1') then
+            case a is
+                when A_COLUP0 =>
+                    p0_colu <= d(7 downto 1);
+                when A_COLUP1 =>
+                    p1_colu <= d(7 downto 1);
+                when A_COLUPF =>
+                    pf_colu <= d(7 downto 1);
+                when A_COLUBK =>
+                    bk_colu <= d(7 downto 1);
+                when others => null;
+            end case;
+        end if;
+
         if (clk'event and clk = '1') then
+            p0_colu_reg <= p0_colu;
+            p1_colu_reg <= p1_colu;
+            pf_colu_reg <= pf_colu;
+            bk_colu_reg <= bk_colu;
+
             if cs = '0' then
                 floating_bus <= d;
             end if;
 
             phi2_d <= phi2;
-            -- phi2_en doesn't work well here
+            -- latch when phi2 is high
             if (r = '0') and (cs = '1') and (phi2_d = '0' and phi2 = '1') then
                 case a is
                     when A_VSYNC =>
@@ -1025,14 +1084,6 @@ begin
                         p1_vdel <= d(0);
                     when A_VDELBL =>
                         bl_vdel <= d(0);
-                    when A_COLUP0 =>
-                        p0_colu <= d(7 downto 1);
-                    when A_COLUP1 =>
-                        p1_colu <= d(7 downto 1);
-                    when A_COLUPF =>
-                        pf_colu <= d(7 downto 1);
-                    when A_COLUBK =>
-                        bk_colu <= d(7 downto 1);
                     when A_AUDF0 =>
                         a0_freq <= d(4 downto 0);
                     when A_AUDF1 =>
@@ -1067,14 +1118,26 @@ begin
                     int_colu <= p0_colu;
                 elsif (p1_pix = '1' or m1_pix = '1') then
                     int_colu <= p1_colu;
-                elsif (pf_pix = '1' or bl_pix = '1') then
-                    int_colu <= pf_colu;
+                elsif (bl_pix = '1') then
+                  int_colu <= pf_colu;
+                elsif (pf_pix = '1') then
+                    if pf_score = '1' then
+                        if center = '0' then
+                            int_colu <= p0_colu;
+                        else
+                            int_colu <= p1_colu;
+                        end if;
+                    else
+                        int_colu <= pf_colu;
+                    end if;
                 else
 --                    int_colu <= "0110010";
                     int_colu <= bk_colu;
                 end if;
             else
-                if (pf_pix = '1' or bl_pix = '1') then
+                if (pf_pix = '1') then
+                    int_colu <= pf_colu;
+                elsif (bl_pix = '1') then
                     int_colu <= pf_colu;
                 elsif (p0_pix = '1' or m0_pix = '1') then
                     int_colu <= p0_colu;
@@ -1113,7 +1176,7 @@ begin
     begin
 
         if (clk'event and clk = '1') then
-            if (hh1_edge = '1') then
+            if (hh0 = '1') then
                 if (sec = '1') then
                     hmove_cntr <= hmove_cntr + 1;
                 end if;
@@ -1165,7 +1228,7 @@ begin
         if (clk'event and clk = '1') then
             if (cx_clr = '1') then
                 cx <= "000000000000000";
-            else
+            elsif hblank = '0' and vblank = '0' then
                 if (m0_pix = '1' and p0_pix = '1') then
                     cx(0) <= '1';
                 end if;
